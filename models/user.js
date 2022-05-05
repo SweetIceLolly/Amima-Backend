@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const user_schema = new mongoose.Schema({
-  name: {
+  first_name: {
+    type: String,
+    required: true
+  },
+  last_name: {
     type: String,
     required: true
   },
@@ -10,7 +14,11 @@ const user_schema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  password: {
+  profile_image: {
+    type: String,
+    default: 'default_avatar.png'
+  },
+  provider: {
     type: String,
     required: true
   },
