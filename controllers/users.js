@@ -1,3 +1,5 @@
+const User = require('../models/user');
+
 function create_user(req, res, next) {
   res.send('create_user');
 }

@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require("cors");
 const compression = require("compression");
 const helmet = require("helmet");
 const bodyParser = require("body-parser");

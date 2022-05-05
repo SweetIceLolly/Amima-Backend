@@ -1,3 +1,5 @@
+const Post = require('../models/post');
+
 function create_post(req, res, next) {
   console.log(req.body);
   res.send('create_post');

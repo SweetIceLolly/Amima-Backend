@@ -1,10 +1,5 @@
-const LoginToken = require('./schema/login_token');
+const crypto = require('crypto');
 
-function check_login_token(req, res, next) {
-  // TODO: Check if the token is valid
-  next();
+function generate_token() {
+  return crypto.randomBytes(32).toString('hex');
 }
-
-module.exports = {
-  check_login_token: check_login_token
-};
