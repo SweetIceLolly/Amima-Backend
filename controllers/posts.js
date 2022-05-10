@@ -71,7 +71,7 @@ function create_post(req, res, next) {
 }
 
 function get_post(req, res, next) {
-  res.send('get_post');
+  res.send('get_post: ' + req.params.id);
 }
 
 module.exports = {
