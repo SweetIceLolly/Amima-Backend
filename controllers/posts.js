@@ -15,8 +15,8 @@ function create_post(req, res, next) {
     });
   }
 
-  // Check if title is too lon
-  if (req.body.title.length > 21) {
+  // Check if title is too long
+  if (req.body.title.length > 25) {
     return res.status(400).json({
       error: 'Title is too long',
     });
