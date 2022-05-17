@@ -71,23 +71,7 @@ function create_post(req, res, next) {
 }
 
 function get_post(req, res, next) {
-  const postId = req.params.id;
-
-  Post.findOne({ _id: postId }, (err, post) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
-    }
-
-    if (!post) {
-      return res.status(404).json({
-        error: 'Post not found'
-      });
-    }
-
-    return res.status(200).json(post);   //check needed
-  });
+  res.send('get_post: ' + req.params.id);
 }
 
 module.exports = {
