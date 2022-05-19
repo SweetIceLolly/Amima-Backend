@@ -3,6 +3,7 @@ const compression = require("compression");
 const helmet = require("helmet");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const uploader = require("express-fileupload");
 
 const routers = require("./routers");
 
@@ -35,6 +36,12 @@ function start_server() {
 
   // Add compression middleware
   app.use(compression());
+
+  // Add uploader middleware
+  app.use(uploader({
+    limits: { fileSize: Number(process.env.UPLOAD_IMAGE_SIZE) },
+  }));
+
 
   // Add body parser middleware
   app.use(bodyParser.json());
