@@ -90,7 +90,40 @@ function get_post(req, res, next) {
   });
 }
 
+
+function get_post_by_userId(req, res, next) {
+  const userId = req.params.userId;
+
+  Post.find({ posterId: userId }, (err, posts) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    if (!posts) {
+      return res.status(404).json({
+        error: 'Posts by user not found'
+      });
+    }
+
+    return res.status(200).json(posts)
+  });
+}
+
+/**
+ * Get posts by user id
+ * Learn Post.findOne in mongoose
+ */
+
+/**
+ * Delete post API
+ * Need to be logged in to delete post
+ * Compare user tokens to see if you are allowed to delete post
+ */
+
 module.exports = {
   create_post: create_post,
-  get_post: get_post
+  get_post: get_post,
+  get_post_by_userId: get_post_by_userId
 }
