@@ -8,6 +8,7 @@ function init_router(app) {
   app.post('/user', usersController.create_user, tokensController.create_token);
   app.get('/user/:id', tokensController.check_login_token, tokensController.renew_token, usersController.get_user);
   app.post('/login', usersController.login, tokensController.create_token);
+  app.get('/searchPost/:term', postsController.search_post);
 }
 
 module.exports = {

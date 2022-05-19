@@ -1,3 +1,4 @@
+const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 
@@ -15,7 +16,7 @@ function create_post(req, res, next) {
     });
   }
 
-  // Check if title is too lon
+  // Check if title is too long
   if (req.body.title.length > 21) {
     return res.status(400).json({
       error: 'Title is too long',
@@ -69,7 +70,7 @@ function create_post(req, res, next) {
     });
   });
 }
-
+//get information about the posts, gets the post id
 function get_post(req, res, next) {
   const postId = req.params.id;
 
@@ -90,7 +91,30 @@ function get_post(req, res, next) {
   });
 }
 
+//make the function for search post using search term
+function search_post(req, res, next) {
+
+  var searchTerm = req.query.searchterm;
+  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  
+  Post.find({ $or: [
+      { content: { $regex: searchRegex } }, 
+      { title: {$regex: searchRegex} }
+    ]}, (err, posts) => {
+      if (err) {
+        return res.status(500).json({
+          error: 'Internal server error'
+        });
+      }
+
+      return res.status(200).json(posts);
+    }  
+  )  
+}
+
+
 module.exports = {
   create_post: create_post,
-  get_post: get_post
+  get_post: get_post,
+  search_post: search_post
 }
