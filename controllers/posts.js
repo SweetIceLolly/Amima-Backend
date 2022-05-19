@@ -3,30 +3,22 @@ const utils = require('../utils');
 
 function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
-    return res.status(400).json({
-      error: 'Missing required fields',
-    });
+    return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
   // Need 1 to 10 images
   if (req.body.images.length < 1 || req.body.images.length > 10) {
-    return res.status(400).json({
-      error: 'Invalid number of images',
-    });
+    return utils.response(req, res, 400, {error: 'Invalid number of images'});
   }
 
   // Check if title is too lon
   if (req.body.title.length > 21) {
-    return res.status(400).json({
-      error: 'Title is too long',
-    });
+    return utils.response(req, res, 400, {error: 'Title is too long'});
   }
 
   // Check if content is too long
   if (req.body.content.length > 2000) {
-    return res.status(400).json({
-      error: 'Content is too long',
-    });
+    return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
   // Validate the image paths
@@ -34,17 +26,13 @@ function create_post(req, res, next) {
 
   // Check if there are too many keywords
   if (req.body.keywords.length > 10) {
-    return res.status(400).json({
-      error: 'Too many keywords',
-    });
+    return utils.response(req, res, 400, {error: 'Too many keywords'});
   }
 
   // Check if keywords are valid
   for (let keyword of req.body.keywords) {
     if (!utils.is_valid_keyword(keyword)) {
-      return res.status(400).json({
-        error: 'Invalid keywords',
-      });
+      return utils.response(req, res, 400, {error: 'Invalid keywords'});
     }
   }
 
@@ -58,15 +46,11 @@ function create_post(req, res, next) {
 
   post.save((err, post) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error',
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return res.status(201).json({
-      message: 'Post created',
-      postId: post._id,
-    });
+    return utils.response(req, res, 201, {message: 'Post created', postId: post._id });
+
   });
 }
 
@@ -75,18 +59,14 @@ function get_post(req, res, next) {
 
   Post.findOne({ _id: postId }, (err, post) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
     if (!post) {
-      return res.status(404).json({
-        error: 'Post not found'
-      });
+      return utils.response(req, res, 404, {error: 'Post not found'});
     }
 
-    return res.status(200).json(post);   //check needed
+    return utils.response(req, res, 200, {post}); //check needed
   });
 }
 
