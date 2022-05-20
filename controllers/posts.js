@@ -116,6 +116,23 @@ function get_post_by_userId(req, res, next) {
  * Learn Post.findOne in mongoose
  */
 
+
+function delete_post(req, res, next) {
+  const postId = req.params.id;
+
+  Post.deleteOne({user : req.auth_user_id, _id : postId})
+    .then(() => {
+      return res.status(200).json({
+        message: 'Post deleted'
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    });
+}
+
 /**
  * Delete post API
  * Need to be logged in to delete post
@@ -125,5 +142,6 @@ function get_post_by_userId(req, res, next) {
 module.exports = {
   create_post: create_post,
   get_post: get_post,
-  get_post_by_userId: get_post_by_userId
+  get_post_by_userId: get_post_by_userId,
+  delete_post: delete_post
 }
