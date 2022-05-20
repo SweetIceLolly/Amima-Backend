@@ -11,6 +11,7 @@ function init_router(app) {
   app.post('/login', usersController.login, tokensController.create_token);
   app.get('/searchPost/:term', postsController.search_post);
   app.get('/newestposts', postsController.get_newest_posts);
+  app.post('/editPost', tokensController.check_login_token, tokensController.renew_token, postsController.edit_post);
 }
 
 module.exports = {
