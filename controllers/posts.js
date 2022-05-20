@@ -1,3 +1,4 @@
+const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 const Image = require('../models/image');
@@ -70,7 +71,7 @@ function create_post(req, res, next) {
     });
   });
 }
-
+//get information about the posts, gets the post id
 function get_post(req, res, next) {
   const postId = req.params.id;
 
@@ -88,6 +89,24 @@ function get_post(req, res, next) {
     }
 
     return res.status(200).json(post);   //check needed
+  });
+}
+
+function search_post(req, res, next) {
+  var searchTerm = req.query.searchterm;
+  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  
+  Post.find({ $or: [
+    { content: { $regex: searchRegex } }, 
+    { title: {$regex: searchRegex} }
+  ]}, (err, posts) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    return res.status(200).json(posts);
   });
 }
 
@@ -144,9 +163,12 @@ function get_newest_posts(req, res, next) {
     return res.status(200).json(post);
   }).sort({postDate:-1}).limit(20);
 }
+
+
 module.exports = {
   create_post: create_post,
   get_post: get_post,
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
+  search_post: search_post
 }
