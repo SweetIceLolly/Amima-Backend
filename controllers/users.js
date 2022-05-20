@@ -47,7 +47,23 @@ function create_user(req, res, next) {
 }
 
 function get_user(req, res, next) {
-  res.send('get_user');
+  const user_id = req.params.user;
+
+  User.findOne({ _id: user_id }, (err, user) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    return res.status(200).json(user_id);
+  });
 }
 
 function login(req, res, next) {

@@ -1,5 +1,7 @@
+const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
+const Image = require('../models/image');
 
 function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
@@ -11,8 +13,8 @@ function create_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Invalid number of images'});
   }
 
-  // Check if title is too lon
-  if (req.body.title.length > 21) {
+  // Check if title is too long
+  if (req.body.title.length > 25) {
     return utils.response(req, res, 400, {error: 'Title is too long'});
   }
 
@@ -53,7 +55,7 @@ function create_post(req, res, next) {
 
   });
 }
-
+//get information about the posts, gets the post id
 function get_post(req, res, next) {
   const postId = req.params.id;
 
@@ -70,7 +72,83 @@ function get_post(req, res, next) {
   });
 }
 
+function search_post(req, res, next) {
+  var searchTerm = req.query.searchterm;
+  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  
+  Post.find({ $or: [
+    { content: { $regex: searchRegex } }, 
+    { title: {$regex: searchRegex} }
+  ]}, (err, posts) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    return res.status(200).json(posts);
+  });
+}
+
+function upload_image(req, res, next) {
+  if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
+    return res.status(400).json({
+      error: 'No files were uploaded',
+    });
+  }
+
+  // Reject if the image is too large
+  if (req.files.image.size > Number(process.env.UPLOAD_IMAGE_SIZE)) {
+    return res.status(400).json({
+      error: 'Image is too large',
+    });
+  }
+
+  const image = new Image({
+    uploaderId: req.body.auth_user_id,
+    timestamp: Date.now(),
+    originalFilename: req.files.image.name,
+  });
+
+  image.save((err, image) => {
+    if (err || !image) {
+      return res.status(500).json({
+        error: 'Internal server error',
+      });
+    }
+
+    const file_name = image._id + '.png';
+    req.files.image.mv(process.env.UPLOAD_PATH + file_name)
+      .then(() => {
+        return res.status(201).json({
+          message: 'Image uploaded',
+          imageId: image._id,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          error: 'Internal server error',
+        });
+      });
+  });
+}
+
+function get_newest_posts(req, res, next) {
+  Post.find((err, post) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+    return res.status(200).json(post);
+  }).sort({postDate:-1}).limit(20);
+}
+
+
 module.exports = {
   create_post: create_post,
-  get_post: get_post
+  get_post: get_post,
+  upload_image: upload_image,
+  get_newest_posts: get_newest_posts,
+  search_post: search_post
 }
