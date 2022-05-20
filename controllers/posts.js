@@ -81,27 +81,21 @@ function search_post(req, res, next) {
     { title: {$regex: searchRegex} }
   ]}, (err, posts) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return res.status(200).json(posts);
+    return utils.response(req, res, 200, posts);
   });
 }
 
 function upload_image(req, res, next) {
   if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
-    return res.status(400).json({
-      error: 'No files were uploaded',
-    });
+    return utils.response(req, res, 400, {error: 'No files were uploaded'})
   }
 
   // Reject if the image is too large
   if (req.files.image.size > Number(process.env.UPLOAD_IMAGE_SIZE)) {
-    return res.status(400).json({
-      error: 'Image is too large',
-    });
+    return utils.response(req, res, 400, {error: 'Image is too large'});
   }
 
   const image = new Image({
@@ -112,43 +106,92 @@ function upload_image(req, res, next) {
 
   image.save((err, image) => {
     if (err || !image) {
-      return res.status(500).json({
-        error: 'Internal server error',
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
     const file_name = image._id + '.png';
     req.files.image.mv(process.env.UPLOAD_PATH + file_name)
       .then(() => {
-        return res.status(201).json({
-          message: 'Image uploaded',
-          imageId: image._id,
-        });
+        return utils.response(req, res, 201, {message: 'Image uploaded', imageId: image._id});
       })
       .catch((err) => {
-        return res.status(500).json({
-          error: 'Internal server error',
-        });
+        return utils.response(req, res, 500, {error: 'Internal server error'});
       });
   });
 }
 
-function get_newest_posts(req, res, next) {
-  Post.find((err, post) => {
+function get_post_by_userId(req, res, next) {
+  const userId = req.params.userId;
+
+  Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
       return res.status(500).json({
         error: 'Internal server error'
       });
     }
-    return res.status(200).json(post);
+    
+    if (!posts) {
+      return res.status(404).json({
+        error: 'Posts by user not found'
+      });
+    }
+
+    return res.status(200).json(posts)
+  });
+}
+
+function delete_post(req, res, next) {
+  const postId = req.params.id;
+
+  Post.deleteOne({user: req.auth_user_id, _id: postId})
+    .then(() => {
+      return res.status(200).json({
+        message: 'Post deleted'
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    });
+}
+
+function get_newest_posts(req, res, next) {
+  Post.find((err, post) => {
+    if (err) {
+      return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
+    }
+    return utils.response(req, res, 200, post);
   }).sort({postDate:-1}).limit(20);
 }
 
+function edit_post(req, res, next) {
+  if (!utils.check_body_fields(req.body, ['title', 'body', 'content', 'images','keywords'])) {
+    return utils.response(req, res, 400, {error: 'Missing required fields'});
+  }
+
+  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+    title: req.body.title, 
+    body: req.body.body, 
+    content: req.body.content,
+    images: req.body.images,
+    keywords: req.body.keywords
+  }}).exec(function(err, post) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    } else {
+      return utils.response(req, res, 200, post);
+    }
+ });
+}
 
 module.exports = {
   create_post: create_post,
   get_post: get_post,
+  get_post_by_userId: get_post_by_userId,
+  delete_post: delete_post,
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
-  search_post: search_post
+  search_post: search_post,
+  edit_post: edit_post
 }
