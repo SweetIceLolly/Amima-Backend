@@ -51,18 +51,14 @@ function get_user(req, res, next) {
 
   User.findOne({ _id: user_id }, (err, user) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
     if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
+      return utils.response(req, res, 404, {error: 'User not found'});
     }
 
-    return res.status(200).json(user_id);
+    return utils.response(req, res, 200, user_id);
   });
 }
 
@@ -89,8 +85,27 @@ function login(req, res, next) {
   });
 }
 
+function editProfile(req, res, next){
+  if (!utils.check_body_fields(req.body, ['profileImg', 'userName', 'bio'])) {
+    return utils.response(req, res, 400, {error: 'Missing required fields'});
+  }
+
+  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+    profile_image: req.body.profileImg, 
+    user_name: req.body.userName, 
+    bio: req.body.bio
+  }}).exec(function(err, user) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    } else {
+      return utils.response(req, res, 200, user);
+    }
+ });
+}
+
 module.exports = {
   create_user: create_user,
   get_user: get_user,
-  login: login
+  login: login,
+  editProfile: editProfile
 };
