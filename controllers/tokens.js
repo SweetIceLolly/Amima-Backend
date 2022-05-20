@@ -5,30 +5,22 @@ function check_login_token(req, res, next) {
   // Note: the token is in the header's auth field
   const token = req.headers.auth;
   if (!token) {
-    return res.status(401).json({
-      error: 'No token provided'
-    });
+    return utils.response(req, res, 401, {error: 'No token provided'});
   }
 
   // Check if the token is valid
   LoginToken.findOne({ token }, (err, login_token) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
     if (!login_token) {
-      return res.status(401).json({
-        error: 'Invalid token'
-      });
+      return utils.response(req, res, 401, {error: 'Invalid token'});
     }
 
     // Check if the token has expired
     if (login_token.expires_at > Date.now()) {
-      return res.status(401).json({
-        error: 'Token expired'
-      });
+      return utils.response(req, res, 401, {error: 'Token expired'});
     }
 
     req.auth_token = login_token;
@@ -55,14 +47,10 @@ function create_token(req, res, next) {
 
   token.save((err, token) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return res.status(200).json({
-      token: token.token
-    });
+    return utils.response(req, res, 200, {token: token.token});
   });
 }
 
