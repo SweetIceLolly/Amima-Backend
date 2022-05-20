@@ -133,6 +133,42 @@ function upload_image(req, res, next) {
   });
 }
 
+function get_post_by_userId(req, res, next) {
+  const userId = req.params.userId;
+
+  Post.find({ posterId: userId }, (err, posts) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+    
+    if (!posts) {
+      return res.status(404).json({
+        error: 'Posts by user not found'
+      });
+    }
+
+    return res.status(200).json(posts)
+  });
+}
+
+function delete_post(req, res, next) {
+  const postId = req.params.id;
+
+  Post.deleteOne({user: req.auth_user_id, _id: postId})
+    .then(() => {
+      return res.status(200).json({
+        message: 'Post deleted'
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    });
+}
+
 function get_newest_posts(req, res, next) {
   Post.find((err, post) => {
     if (err) {
@@ -144,10 +180,11 @@ function get_newest_posts(req, res, next) {
   }).sort({postDate:-1}).limit(20);
 }
 
-
 module.exports = {
   create_post: create_post,
   get_post: get_post,
+  get_post_by_userId: get_post_by_userId,
+  delete_post: delete_post,
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
   search_post: search_post
