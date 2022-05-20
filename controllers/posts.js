@@ -134,8 +134,19 @@ function upload_image(req, res, next) {
   });
 }
 
+function get_newest_posts(req, res, next) {
+  Post.find((err, post) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+    return res.status(200).json(post);
+  }).sort({postDate:-1}).limit(20);
+}
 module.exports = {
   create_post: create_post,
   get_post: get_post,
   upload_image: upload_image,
+  get_newest_posts: get_newest_posts,
 }
