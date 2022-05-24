@@ -4,7 +4,7 @@ const {OAuth2Client} = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-function verify_oauth_token(req, res, next) {
+async function verify_oauth_token(req, res, next) {
   if (!utils.check_body_fields(req.body, ['provider', 'loginData'])) {
     return utils.response(req, res, 400, 'Missing required fields');
   }
@@ -12,36 +12,56 @@ function verify_oauth_token(req, res, next) {
   // Check provider
   if (req.body.provider === 'google') {
     // Verify the JWT with Google
-    client.verifyIdToken({
+    const ticket = await client.verifyIdToken({
       idToken: req.body.loginData,
       audience: process.env.GOOGLE_CLIENT_ID,
     })
-      .then(ticket => {
-        if (!ticket.payload.email) {
-          return utils.response(req, res, 400, 'No email associated');
-        }
-        req.body.google_user = ticket.payload;
-        req.body.email = ticket.payload.email;
-        next();
-      })
       .catch(err => {
         return utils.response(req, res, 400, {error: 'Failed to verify token'});
       });
+
+    if (!ticket.payload.email) {
+      return utils.response(req, res, 400, 'No email associated');
+    }
+    req.body.google_user = ticket.payload;
+    req.body.email = ticket.payload.email;
+    next();
   }
   else if (req.body.provider === 'facebook') {
     // Verify the token with Facebook
-    utils.http_get('https://graph.facebook.com/me?fields=id,name,email&access_token=' + req.body.loginData.accessToken)
-      .then(response => {
-        if (!response.data.email) {
-          return utils.response(req, res, 400, 'No email associated');
-        }
-        req.body.facebook_user = response.data;
-        req.body.email = response.data.email;
-        next();
-      })
+    const verifyRes = await utils.http_get('https://graph.facebook.com/debug_token?input_token=' +
+      req.body.loginData.accessToken +
+      '&access_token=' +
+      process.env.FACEBOOK_APP_TOKEN
+    )
       .catch(err => {
         return utils.response(req, res, 400, {error: 'Failed to verify token'});
       });
+
+    // Check App ID
+    if (verifyRes.data.data.app_id !== process.env.FACEBOOK_APP_ID) {
+      return utils.response(req, res, 400, 'Failed to verify token');
+    }
+
+    // Check if the token is valid
+    if (verifyRes.data.data.is_valid !== true) {
+      return utils.response(req, res, 400, 'Failed to verify token');
+    }
+
+    // Get user info
+    const userInfo = await utils.http_get('https://graph.facebook.com/me?fields=id,name,email&access_token=' +
+      req.body.loginData.accessToken
+    )
+      .catch(err => {
+        return utils.response(req, res, 400, {error: 'Failed to verify token'});
+      });
+
+    if (!userInfo.data.email) {
+      return utils.response(req, res, 400, 'No email associated');
+    }
+    req.body.facebook_user = userInfo.data;
+    req.body.email = userInfo.data.email;
+    next();
   }
   else {
     return utils.response(req, res, 400, 'Invalid provider');
