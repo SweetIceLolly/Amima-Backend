@@ -132,9 +132,52 @@ function editProfile(req, res, next){
  });
 }
 
+function profile_image_upload(req, res, next) {
+  if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
+    return utils.response(req, res, 400, {error: 'No files were uploaded'})
+  }
+
+  if (req.files.image.size > Number(process.env.UPLOAD_IMAGE_SIZE)) {
+    return utils.response(req, res, 400, {error: 'Image is too large'});
+  }
+
+  const image = new Image({
+    uploaderId: req.body.auth_user_id,
+    timestamp: Date.now(),
+    originalFilename: req.files.image.name,
+  });
+
+  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+    profile_image: req.files.image
+  }}).exec(function(err, user) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    } else {
+      return image.save((err, image) => {
+        
+        if (err || !image) {
+          return utils.response(req, res, 500, {error: 'Internal server error'});
+        }
+    
+        const file_name = image._id + '.png';
+        req.files.image.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
+          .then(() => {
+            return utils.response(req, res, 201, {message: 'Image uploaded', imageId: image._id});
+          })
+          .catch((err) => {
+            return utils.response(req, res, 500, {error: 'Internal server error'});
+          });
+
+      });
+    }
+ });
+}
+
+
 module.exports = {
   get_user: get_user,
   login: login,
   editProfile: editProfile,
-  verify_oauth_token: verify_oauth_token
+  verify_oauth_token: verify_oauth_token,
+  profile_image_upload: profile_image_upload
 };
