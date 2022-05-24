@@ -19,15 +19,16 @@ function check_login_token(req, res, next) {
     }
 
     // Check if the token has expired
-    if (login_token.expires_at > Date.now()) {
+    if (login_token.expires_at <= Date.now()) {
       return utils.response(req, res, 401, {error: 'Token expired'});
     }
 
-    req.auth_token = login_token;
     if (req.body) {
       req.body.auth_user_id = login_token.user_id;
+      req.body.auth_token = login_token;
     } else {
       req.auth_user_id = login_token.user_id;
+      req.auth_token = login_token;
     }
     next();
   });
@@ -58,8 +59,15 @@ function renew_token(req, res, next) {
   // Note: the token is in the body's auth_token field
   // Extend the token's expiration time
   try {
-    req.body.auth_token.expires_at = Date.now() + process.env.TOKEN_EXPIRATION_TIME;
-    req.body.auth_token.save();
+    if (req.body) {
+      req.body.auth_token.expires_at = Date.now() + process.env.TOKEN_EXPIRATION_TIME;
+      req.body.auth_token.save();
+    }
+    else {
+      req.auth_token.expires_at = Date.now() + process.env.TOKEN_EXPIRATION_TIME;
+      req.auth_token.save();
+    }
+
     next();
   }
   catch (err) {
