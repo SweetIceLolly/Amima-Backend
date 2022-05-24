@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const loggingSchema = mongoose.Schema ({
+const loggingSchema = new mongoose.Schema ({
     IP: {
         type: String
     },
@@ -26,6 +26,6 @@ const loggingSchema = mongoose.Schema ({
 });
 
 
-const log = mongoose.model('log', loggingSchema);
-module.exports = log;
+const Log = mongoose.model('Log', loggingSchema);
+module.exports = Log;
 

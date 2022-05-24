@@ -42,7 +42,7 @@ function create_token(req, res, next) {
     user_id: user._id,
     token: utils.generate_token(),
     created_at: Date.now(),
-    expires_at: Date.now() + process.env.TOKEN_EXPIRATION_TIME
+    expires_at: Date.now() + Number(process.env.TOKEN_EXPIRATION_TIME)
   });
 
   token.save((err, token) => {

@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const compression = require("compression");
 const helmet = require("helmet");
 const bodyParser = require("body-parser");
@@ -19,18 +20,13 @@ function start_server() {
 
   app.disable('x-powered-by');
 
-  // Handle CORS and headers
-  app.all('*', function(req, res, next) {
-    // Check if the origin is allowed
-    if (cors_domains.has(req.headers.origin)) {
-      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-    }
-    res.setHeader("Access-Control-Allow-Headers", "Authentication, X-Requested-With,content-type");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
-
-    next();
-  });
+  // Add CORS middleware
+  app.use(cors({
+    origin: [
+      'http://localhost:4200',
+      'https://amimaa.com'
+    ]
+  }));
 
   // Add security middleware
   app.use(helmet());

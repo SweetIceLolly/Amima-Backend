@@ -1,48 +1,76 @@
 const User = require('../models/user');
-const tokensController = require('../controllers/tokens');
 const utils = require('../utils');
+const {OAuth2Client} = require('google-auth-library');
 
-function create_user(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['email', 'provider', 'oauth_token'])) {
-    return utils.response(req, res, 400, {error: 'Missing required fields'});
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+function verify_oauth_token(req, res, next) {
+  if (!utils.check_body_fields(req.body, ['provider', 'loginData'])) {
+    return utils.response(req, res, 400, 'Missing required fields');
   }
 
-  // TODO authenticate with google or facebook
+  // Check provider
+  if (req.body.provider === 'google') {
+    // Verify the JWT with Google
+    client.verifyIdToken({
+      idToken: req.body.loginData,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    })
+      .then(ticket => {
+        if (!ticket.payload.email) {
+          return utils.response(req, res, 400, 'No email associated');
+        }
+        req.body.google_user = ticket.payload;
+        req.body.email = ticket.payload.email;
+        next();
+      })
+      .catch(err => {
+        return utils.response(req, res, 400, {error: 'Failed to verify token'});
+      });
+  }
+  else if (req.body.provider === 'facebook') {
+    // Verify the token with Facebook
+    utils.http_get('https://graph.facebook.com/me?fields=id,name,email&access_token=' + req.body.loginData.accessToken)
+      .then(response => {
+        if (!response.data.email) {
+          return utils.response(req, res, 400, 'No email associated');
+        }
+        req.body.facebook_user = response.data;
+        req.body.email = response.data.email;
+        next();
+      })
+      .catch(err => {
+        return utils.response(req, res, 400, {error: 'Failed to verify token'});
+      });
+  }
+  else {
+    return utils.response(req, res, 400, 'Invalid provider');
+  }
+}
 
-  // Check if the user already exists
-  User.findOne({
-    email: req.body.email
-  }, (err, user) => {
-    if (err) {
-      return next(err);
-    }
+function create_user(req, res, next) {
+  let user_name, provider;
 
-    if (user) {
-      // User already exists
-      return utils.response(req, res, 409, {error: 'User already exists'});
-    }
+  if (req.body.provider === 'google') {
+    user_name = req.body.google_user.name;
+    provider = 'google';
+  }
+  else if (req.body.provider === 'facebook') {
+    user_name = req.body.facebook_user.name;
+    provider = 'facebook';
+  }
+  else {
+    return utils.response(req, res, 400, 'Invalid provider');
+  }
 
-    // Create a new user
-    const new_user = new User({
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      email: req.body.email,
-      provider: req.body.provider,
-      bio: '',
-      created_at: new Date(),
-      posts: [],
-      favorites: [],
-    });
-
-    new_user.save((err, user) => {
-      if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
-      }
-
-      req.body.auth_user = user;
-
-      next();
-    });
+  return User.create({
+    user_name: user_name,
+    email: req.body.email,
+    provider: provider,
+    bio: process.env.DEFAULT_BIO,
+    created_at: new Date(),
+    posts: [],
+    favorites: [],
   });
 }
 
@@ -63,25 +91,26 @@ function get_user(req, res, next) {
 }
 
 function login(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['email', 'provider', 'oauth_token'])) {
-    return utils.response(req, res, 400, 'Missing required fields');
-  }
-
-  // TODO authenticate with google or facebook
-
   // Match the email to a user
   User.findOne({ email: req.body.email }, (err, user) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    if (!user) {
-      return utils.response(req, res, 404, {error: 'User not found'});
+    if (user) {
+      req.body.auth_user = user;
+      next();
     }
-
-    req.body.auth_user = user;
-
-    next();
+    else {
+      create_user(req, res)
+        .then(user => {
+          req.body.auth_user = user;
+          next();
+        })
+        .catch(err => {
+          return utils.response(req, res, 500, {error: 'Internal server error'});
+        });
+    }
   });
 }
 
@@ -104,8 +133,8 @@ function editProfile(req, res, next){
 }
 
 module.exports = {
-  create_user: create_user,
   get_user: get_user,
   login: login,
-  editProfile: editProfile
+  editProfile: editProfile,
+  verify_oauth_token: verify_oauth_token
 };
