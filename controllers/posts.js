@@ -68,7 +68,7 @@ function get_post(req, res, next) {
       return utils.response(req, res, 404, {error: 'Post not found'});
     }
 
-    return utils.response(req, res, 200, {post}); //check needed
+    return utils.response(req, res, 200, post); //check needed
   });
 }
 
