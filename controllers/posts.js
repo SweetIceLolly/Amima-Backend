@@ -125,6 +125,7 @@ function upload_image(req, res, next) {
 
 function get_post_by_userId(req, res, next) {
   const userId = req.params.id;
+  const skipCount = req.query.count;
 
   Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
@@ -140,7 +141,7 @@ function get_post_by_userId(req, res, next) {
     }
 
     return res.status(200).json(posts)
-  });
+  }, {skip: skipCount, limit:20}).sort({postDate:-1});
 }
 
 function delete_post(req, res, next) {
