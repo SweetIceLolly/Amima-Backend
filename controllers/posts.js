@@ -184,6 +184,19 @@ function edit_post(req, res, next) {
     }
  });
 }
+function delete_post_image(req, res, next){
+  const imageId = req.params.id;
+
+  Image.deleteOne({_id: imageId})
+    .then(() => {
+      return res.status(200).json();
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    });
+}
 
 module.exports = {
   create_post: create_post,
@@ -193,5 +206,6 @@ module.exports = {
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
   search_post: search_post,
-  edit_post: edit_post
+  edit_post: edit_post,
+  delete_post_image
 }
