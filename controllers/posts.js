@@ -77,7 +77,8 @@ function get_post(req, res, next) {
 function search_post(req, res, next) {
   var searchTerm = req.query.searchterm;
   var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
-  
+  const skipCount = req.query.count || 0;
+
   Post.find({ $or: [
     { content: { $regex: searchRegex } }, 
     { title: {$regex: searchRegex} }
@@ -87,7 +88,7 @@ function search_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, posts);
-  });
+  }, {skip: skipCount, limit: 20}).sort({postDate:-1});
 }
 
 function upload_image(req, res, next) {
