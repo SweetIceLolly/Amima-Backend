@@ -122,17 +122,17 @@ function upload_image(req, res, next) {
 
 function get_post_by_userId(req, res, next) {
   const userId = req.params.id;
+  var ObjectId = require('mongoose').Types.ObjectId;
+  if (ObjectId.isValid(userId) == false){
+    return res.status(400).json({
+      error: 'Invalid User ID'
+    });
+  }
 
   Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
       return res.status(500).json({
         error: 'Internal server error'
-      });
-    }
-    
-    if (!posts) {
-      return res.status(404).json({
-        error: 'Posts by user not found'
       });
     }
 
