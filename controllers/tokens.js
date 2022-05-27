@@ -36,7 +36,7 @@ function check_login_token(req, res, next) {
 
 function create_token(req, res, next) {
   // Note: the user is in the body's auth_user field
-  const user = req.body.auth_user;
+  const user = req.body.auth_user_id;
 
   // Create a new token
   const token = new LoginToken({
@@ -51,7 +51,7 @@ function create_token(req, res, next) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return utils.response(req, res, 200, {token: token.token});
+    return utils.response(req, res, 200, {token: token.token, user_id: token.user_id});
   });
 }
 
@@ -60,11 +60,11 @@ function renew_token(req, res, next) {
   // Extend the token's expiration time
   try {
     if (req.body) {
-      req.body.auth_token.expires_at = Date.now() + process.env.TOKEN_EXPIRATION_TIME;
+      req.body.auth_token.expires_at = Date.now() + Number(process.env.TOKEN_EXPIRATION_TIME);
       req.body.auth_token.save();
     }
     else {
-      req.auth_token.expires_at = Date.now() + process.env.TOKEN_EXPIRATION_TIME;
+      req.auth_token.expires_at = Date.now() + Number(process.env.TOKEN_EXPIRATION_TIME);
       req.auth_token.save();
     }
 
