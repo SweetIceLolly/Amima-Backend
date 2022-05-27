@@ -7,10 +7,25 @@ function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
-
+  
+  if (typeof (req.body.auth_user_id) != "string" || 
+      typeof (req.body.title) != "string" ||
+      typeof (req.body.content) != "string" ||
+      Array.isArray(req.body.images) == false ||
+      Array.isArray(req.body.keywords) == false) {
+        return utils.response(req, res, 400, {error: 'Invalid type of post'});
+  }
+     
   // Need 1 to 10 images
   if (req.body.images.length < 1 || req.body.images.length > 10) {
     return utils.response(req, res, 400, {error: 'Invalid number of images'});
+  }
+
+  // Check type of elements in images[] array
+  for (let i = 0; i < (req.body.images).length; i++) { 
+    if (typeof((req.body.images)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of images'});
+    }
   }
 
   // Check if title is too long
@@ -29,6 +44,13 @@ function create_post(req, res, next) {
   // Check if there are too many keywords
   if (req.body.keywords.length > 10) {
     return utils.response(req, res, 400, {error: 'Too many keywords'});
+  }
+
+  // Check type of elements in keywords[] array
+  for (let i = 0; i < (req.body.keywords).length; i++) { 
+    if (typeof((req.body.keywords)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of keywords'});
+    }
   }
 
   // Check if keywords are valid
