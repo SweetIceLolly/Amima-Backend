@@ -11,7 +11,7 @@ function init_router(app) {
   app.post('/postimage', tokensController.check_login_token, tokensController.renew_token, usersController.profile_image_upload);
   app.get('/user/:id', usersController.get_user);
   app.post('/login', usersController.verify_oauth_token, usersController.login, tokensController.create_token);
-  app.get('/searchPost/:term', postsController.search_post);
+  app.get('/searchPost', postsController.search_post);
   app.get('/newestposts', postsController.get_newest_posts);
   app.post('/editProfile', tokensController.check_login_token, tokensController.renew_token, usersController.editProfile);
   app.post('/editPost', tokensController.check_login_token, tokensController.renew_token, postsController.edit_post);
