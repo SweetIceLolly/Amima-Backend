@@ -170,7 +170,7 @@ function edit_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+  User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
     title: req.body.title, 
     body: req.body.body, 
     content: req.body.content,
