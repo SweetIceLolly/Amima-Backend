@@ -118,13 +118,13 @@ function login(req, res, next) {
     }
 
     if (user) {
-      req.body.auth_user = user;
+      req.body.auth_user_id = user;
       next();
     }
     else {
       create_user(req, res)
         .then(user => {
-          req.body.auth_user = user;
+          req.body.auth_user_id = user;
           next();
         })
         .catch(err => {
@@ -134,22 +134,20 @@ function login(req, res, next) {
   });
 }
 
-function editProfile(req, res, next){
-  if (!utils.check_body_fields(req.body, ['profileImg', 'userName', 'bio'])) {
+async function editProfile(req, res, next){
+  if (!utils.check_body_fields(req.body, ['userName', 'bio'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
     profile_image: req.body.profileImg, 
     user_name: req.body.userName, 
     bio: req.body.bio
-  }}).exec(function(err, user) {
-    if (err) {
-      return utils.response(req, res, 500, {error: 'Internal server error'});
-    } else {
-      return utils.response(req, res, 200, user);
-    }
- });
+  }}, { new: true}).catch(err => {
+    return utils.response(req, res, 500, {error: 'Internal server error'});
+  })
+
+  return utils.response(req, res, 200, user);
 }
 
 function profile_image_upload(req, res, next) {
@@ -167,7 +165,7 @@ function profile_image_upload(req, res, next) {
     originalFilename: req.files.image.name,
   });
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+  User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
     profile_image: req.files.image
   }}).exec(function(err, user) {
     if (err) {

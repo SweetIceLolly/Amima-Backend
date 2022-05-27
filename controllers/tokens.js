@@ -36,7 +36,7 @@ function check_login_token(req, res, next) {
 
 function create_token(req, res, next) {
   // Note: the user is in the body's auth_user field
-  const user = req.body.auth_user;
+  const user = req.body.auth_user_id;
 
   // Create a new token
   const token = new LoginToken({
