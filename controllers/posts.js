@@ -2,6 +2,8 @@ const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 const Image = require('../models/image');
+const routers = require('../routers');
+const db = require('mongoose');
 
 function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
@@ -157,12 +159,13 @@ function delete_post(req, res, next) {
 }
 
 function get_newest_posts(req, res, next) {
+  const skipCount = req.query.count || 0;
   Post.find((err, post) => {
     if (err) {
       return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
     }
     return utils.response(req, res, 200, post);
-  }).sort({postDate:-1}).limit(20);
+  }, {skip: skipCount, limit:20}).sort({postDate:-1});
 }
 
 function edit_post(req, res, next) {
