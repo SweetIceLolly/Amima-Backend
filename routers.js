@@ -15,6 +15,8 @@ function init_router(app) {
   app.get('/newestposts', postsController.get_newest_posts);
   app.post('/editProfile', tokensController.check_login_token, tokensController.renew_token, usersController.editProfile);
   app.post('/editPost', tokensController.check_login_token, tokensController.renew_token, postsController.edit_post);
+  app.delete('/deletePostImage/:id', postsController.delete_post_image);
+  
 }
 
 module.exports = {
