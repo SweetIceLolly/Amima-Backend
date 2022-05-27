@@ -52,8 +52,8 @@ function start_server() {
   routers.init_router(app);
 
   // Serve static image files
-  app.use('/post_image', express.static(path.join(__dirname, process.env.UPLOAD_PATH)));
-  app.use('/profile_image', express.static(path.join(__dirname, process.env.PROFILE_UPLOAD_PATH)));
+  app.use('/post_images', express.static(path.join(__dirname, process.env.UPLOAD_PATH)));
+  app.use('/profile_images', express.static(path.join(__dirname, process.env.PROFILE_UPLOAD_PATH)));
 
   // Add 404 handler
   app.use(function(req, res, next) {
