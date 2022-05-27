@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const utils = require("./utils")
 const uploader = require("express-fileupload");
+const path = require('path')
 
 const routers = require("./routers");
 
@@ -49,6 +50,10 @@ function start_server() {
 
   // Add routes
   routers.init_router(app);
+
+  // Serve static image files
+  app.use('/post_image', express.static(path.join(__dirname, process.env.UPLOAD_PATH)));
+  app.use('/profile_image', express.static(path.join(__dirname, process.env.PROFILE_UPLOAD_PATH)));
 
   // Add 404 handler
   app.use(function(req, res, next) {
