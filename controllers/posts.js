@@ -2,6 +2,8 @@ const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 const Image = require('../models/image');
+const routers = require('../routers');
+const db = require('mongoose');
 
 function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
@@ -75,7 +77,8 @@ function get_post(req, res, next) {
 function search_post(req, res, next) {
   var searchTerm = req.query.searchterm;
   var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
-  
+  const skipCount = req.query.count || 0;
+
   Post.find({ $or: [
     { content: { $regex: searchRegex } }, 
     { title: {$regex: searchRegex} }
@@ -85,7 +88,7 @@ function search_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, posts);
-  });
+  }, {skip: skipCount, limit: 20}).sort({postDate:-1});
 }
 
 function upload_image(req, res, next) {
@@ -122,6 +125,7 @@ function upload_image(req, res, next) {
 
 function get_post_by_userId(req, res, next) {
   const userId = req.params.id;
+  const skipCount = req.query.count;
 
   Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
@@ -137,7 +141,7 @@ function get_post_by_userId(req, res, next) {
     }
 
     return res.status(200).json(posts)
-  });
+  }, {skip: skipCount, limit:20}).sort({postDate:-1});
 }
 
 function delete_post(req, res, next) {
@@ -157,12 +161,13 @@ function delete_post(req, res, next) {
 }
 
 function get_newest_posts(req, res, next) {
+  const skipCount = req.query.count || 0;
   Post.find((err, post) => {
     if (err) {
       return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
     }
     return utils.response(req, res, 200, post);
-  }).sort({postDate:-1}).limit(20);
+  }, {skip: skipCount, limit:20}).sort({postDate:-1});
 }
 
 function edit_post(req, res, next) {
