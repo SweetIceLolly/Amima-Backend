@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const Image = require('../models/image')
 const utils = require('../utils');
 const {OAuth2Client} = require('google-auth-library');
 
@@ -182,7 +183,7 @@ function profile_image_upload(req, res, next) {
   });
 
   User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
-    profile_image: req.files.image
+    profile_image: req.files.image.name
   }}).exec(function(err, user) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
