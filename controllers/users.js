@@ -139,6 +139,22 @@ async function editProfile(req, res, next){
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
+  if (typeof(req.body.userName) != 'string'){
+    return utils.response(req, res, 400, {error: 'Wrong userName type'});
+  }
+
+  if (typeof(req.body.bio) != 'string'){
+    return utils.response(req, res, 400, {error: 'Wrong bio type'});
+  }
+
+  if (req.body.userName.length > 30) {
+    return utils.response(req, res, 400, {error: 'Username is too long'});
+  }
+
+  if (req.body.bio.length > 250) {
+    return utils.response(req, res, 400, {error: 'Bio is too long'});
+  }
+
   const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
     profile_image: req.body.profileImg, 
     user_name: req.body.userName, 
