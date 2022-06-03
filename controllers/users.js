@@ -1,7 +1,7 @@
 const User = require('../models/user');
 const Image = require('../models/image')
 const utils = require('../utils');
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -96,7 +96,7 @@ function create_user(req, res, next) {
 }
 
 function get_user(req, res, next) {
-  const user_id = req.params.user;
+  const user_id = req.params.id;
 
   User.findOne({ _id: user_id }, (err, user) => {
     if (err) {
@@ -107,7 +107,7 @@ function get_user(req, res, next) {
       return utils.response(req, res, 404, {error: 'User not found'});
     }
 
-    return utils.response(req, res, 200, user_id);
+    return utils.response(req, res, 200, user);
   });
 }
 
