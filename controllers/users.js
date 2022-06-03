@@ -2,6 +2,7 @@ const User = require('../models/user');
 const Image = require('../models/image')
 const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
+const Post = require('../models/post');
 
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -214,11 +215,26 @@ function profile_image_upload(req, res, next) {
  });
 }
 
+function add_favourite_post(req, res, next) {
 
+  if (!utils.check_body_fields(req.body, ['post_id'])) {
+    return utils.response(req, res, 400, {error: 'Missing required fields'});
+  }
+
+  const user = await User.findOneAndUpdate({ _id : req.body.post_id }, { "$push": {
+    favorites: req.body.favorites
+  }}, { new: true }).catch(err => {
+    return utils.response(req, res, 500, {error: 'Internal server error'});
+  })
+
+  return utils.response(req, res, 200, user);
+}
+  
 module.exports = {
   get_user: get_user,
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,
-  profile_image_upload: profile_image_upload
+  profile_image_upload: profile_image_upload,
+  add_favourite_post: add_favourite_post
 };
