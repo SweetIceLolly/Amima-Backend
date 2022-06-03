@@ -21,8 +21,13 @@ function check_body_fields(body, required_fields) {
 }
 
 function is_valid_keyword(keyword) {
-  // There can only be letters and numbers in the keywords, and the length is at most 20.
-  return /^[a-zA-Z0-9]{1,20}$/.test(keyword);
+  // No spaces, /, \ allowed in keywords. The length is at most 10
+  return !(
+    keyword.length > 10 ||
+    keyword.indexOf(' ') !== -1 ||
+    keyword.indexOf('/') !== -1 ||
+    keyword.indexOf('\\') !== -1
+  );
 }
 
 function response(req, res, code, content) {

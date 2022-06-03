@@ -36,7 +36,7 @@ function check_login_token(req, res, next) {
 
 function create_token(req, res, next) {
   // Note: the user is in the body's auth_user field
-  const user = req.body.auth_user;
+  const user = req.body.auth_user_id;
 
   // Create a new token
   const token = new LoginToken({
@@ -53,6 +53,20 @@ function create_token(req, res, next) {
 
     return utils.response(req, res, 200, {token: token.token, user_id: token.user_id});
   });
+}
+
+function delete_token(req, res, next) {
+  LoginToken.deleteMany({user: req.auth_user_id})
+    .then(() => {
+      return res.status(200).json({
+        message: 'token deleted'
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      })
+    })
 }
 
 function renew_token(req, res, next) {
@@ -78,5 +92,6 @@ function renew_token(req, res, next) {
 module.exports = {
   check_login_token: check_login_token,
   create_token: create_token,
-  renew_token: renew_token
+  renew_token: renew_token,
+  delete_token: delete_token
 };

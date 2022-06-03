@@ -1,16 +1,30 @@
-const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 const Image = require('../models/image');
+const db = require('mongoose');
 
 function create_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
-
+  
+  if (typeof (req.body.title) != "string" ||
+      typeof (req.body.content) != "string" ||
+      !Array.isArray(req.body.images) ||
+      !Array.isArray(req.body.keywords)) {
+        return utils.response(req, res, 400, {error: 'Invalid type of post'});
+  }
+     
   // Need 1 to 10 images
   if (req.body.images.length < 1 || req.body.images.length > 10) {
     return utils.response(req, res, 400, {error: 'Invalid number of images'});
+  }
+
+  // Check type of elements in images[] array
+  for (let i = 0; i < (req.body.images).length; i++) { 
+    if (typeof((req.body.images)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of images'});
+    }
   }
 
   // Check if title is too long
@@ -31,6 +45,13 @@ function create_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Too many keywords'});
   }
 
+  // Check type of elements in keywords[] array
+  for (let i = 0; i < (req.body.keywords).length; i++) { 
+    if (typeof((req.body.keywords)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of keywords'});
+    }
+  }
+
   // Check if keywords are valid
   for (let keyword of req.body.keywords) {
     if (!utils.is_valid_keyword(keyword)) {
@@ -42,6 +63,7 @@ function create_post(req, res, next) {
   const post = new Post({
     title: req.body.title,
     content: req.body.content,
+    keywords: req.body.keywords,
     images: req.body.images,
     posterId: req.body.auth_user_id,
   });
@@ -50,14 +72,19 @@ function create_post(req, res, next) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
-
     return utils.response(req, res, 201, {message: 'Post created', postId: post._id });
-
   });
 }
+
 //get information about the posts, gets the post id
 function get_post(req, res, next) {
   const postId = req.params.id;
+
+  if (!db.Types.ObjectId.isValid(postId)){
+    return res.status(400).json({
+      error: 'Wrong get Post ID'
+    });
+  }
 
   Post.findOne({ _id: postId }, (err, post) => {
     if (err) {
@@ -68,14 +95,20 @@ function get_post(req, res, next) {
       return utils.response(req, res, 404, {error: 'Post not found'});
     }
 
-    return utils.response(req, res, 200, post); //check needed
-  });
+    return utils.response(req, res, 200, post);
+  }).populate('posterId');
 }
 
 function search_post(req, res, next) {
   var searchTerm = req.query.searchterm;
-  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+
+  if (typeof(searchTerm) != 'string'){
+    return utils.response(req, res, 400, {error: 'Wrong searchterm type'});
+  }
   
+  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  const skipCount = req.query.count || 0;
+
   Post.find({ $or: [
     { content: { $regex: searchRegex } }, 
     { title: {$regex: searchRegex} }
@@ -85,7 +118,7 @@ function search_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, posts);
-  });
+  }, {skip: skipCount, limit: 20}).sort({postDate:-1});
 }
 
 function upload_image(req, res, next) {
@@ -122,6 +155,17 @@ function upload_image(req, res, next) {
 
 function get_post_by_userId(req, res, next) {
   const userId = req.params.id;
+  const skipCount = req.query.count;
+  
+  if (typeof(skipCount) != 'number'){
+    return utils.response(req, res, 400, {error: 'Wrong skipCount type'});
+  }
+
+  if (!db.Types.ObjectId.isValid(userId)){
+    return res.status(400).json({
+      error: 'Invalid User ID'
+    });
+  }
 
   Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
@@ -129,19 +173,19 @@ function get_post_by_userId(req, res, next) {
         error: 'Internal server error'
       });
     }
-    
-    if (!posts) {
-      return res.status(404).json({
-        error: 'Posts by user not found'
-      });
-    }
 
     return res.status(200).json(posts)
-  });
+  }, {skip: skipCount, limit:20}).sort({postDate:-1});
 }
 
 function delete_post(req, res, next) {
   const postId = req.params.id;
+
+  if (!db.Types.ObjectId.isValid(postId)){
+    return res.status(400).json({
+      error: 'Invalid Post ID'
+    });
+  }
 
   Post.deleteOne({user: req.auth_user_id, _id: postId})
     .then(() => {
@@ -157,22 +201,84 @@ function delete_post(req, res, next) {
 }
 
 function get_newest_posts(req, res, next) {
+  const skipCount = req.query.count || 0;
+
+  if (typeof(skipCount) != 'number'){
+    return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
+  }
+
   Post.find((err, post) => {
     if (err) {
       return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
     }
     return utils.response(req, res, 200, post);
-  }).sort({postDate:-1}).limit(20);
+  }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
 }
 
 function edit_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['title', 'body', 'content', 'images','keywords'])) {
+  if (!utils.check_body_fields(req.body, [ 'post_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
-    title: req.body.title, 
-    body: req.body.body, 
+  if (!db.Types.ObjectId.isValid(req.body.post_id)){
+    return res.status(400).json({
+      error: 'Invalid Post ID'
+    });
+  }
+
+  if (typeof (req.body.title) != "string" ||
+      typeof (req.body.content) != "string" ||
+      !Array.isArray(req.body.images) ||
+      !Array.isArray(req.body.keywords)) {
+        return utils.response(req, res, 400, {error: 'Invalid type of edit'});
+  }
+   
+  // Need 1 to 10 images
+  if (req.body.images.length < 1 || req.body.images.length > 10) {
+    return utils.response(req, res, 400, {error: 'Invalid number of images'});
+  }
+
+  // Check type of elements in images[] array
+  for (let i = 0; i < (req.body.images).length; i++) { 
+    if (typeof((req.body.images)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of images'});
+    }
+  }
+
+  // Check if title is too long
+  if (req.body.title.length > 25) {
+    return utils.response(req, res, 400, {error: 'Title is too long'});
+  }
+
+  // Check if content is too long
+  if (req.body.content.length > 2000) {
+    return utils.response(req, res, 400, {error: 'Content is too long'});
+  }
+
+  // Validate the image paths
+  // TODO
+
+  // Check if there are too many keywords
+  if (req.body.keywords.length > 10) {
+    return utils.response(req, res, 400, {error: 'Too many keywords'});
+  }
+
+  // Check type of elements in keywords[] array
+  for (let i = 0; i < (req.body.keywords).length; i++) { 
+    if (typeof((req.body.keywords)[i]) != 'string') {
+      return utils.response(req, res, 400, {error: 'Invalid type of keywords'});
+    }
+  }
+
+  // Check if keywords are valid
+  for (let keyword of req.body.keywords) {
+    if (!utils.is_valid_keyword(keyword)) {
+      return utils.response(req, res, 400, {error: 'Invalid keywords'});
+    }
+  }
+
+  Post.findOneAndUpdate({ _id : req.body.post_id }, { "$set": {
+    title: req.body.title,  
     content: req.body.content,
     images: req.body.images,
     keywords: req.body.keywords
@@ -185,6 +291,26 @@ function edit_post(req, res, next) {
  });
 }
 
+function delete_post_image(req, res, next){
+  const imageId = req.params.id;
+
+  if (db.Types.ObjectId.isValid(imageId) == false){
+    return res.status(400).json({
+      error: 'Invalid Image ID'
+    });
+  }
+
+  Image.deleteOne({_id: imageId})
+    .then(() => {
+      return res.status(200).json();
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    });
+}
+
 module.exports = {
   create_post: create_post,
   get_post: get_post,
@@ -193,5 +319,6 @@ module.exports = {
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
   search_post: search_post,
-  edit_post: edit_post
+  edit_post: edit_post,
+  delete_post_image
 }

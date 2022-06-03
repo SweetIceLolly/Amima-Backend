@@ -1,6 +1,7 @@
 const User = require('../models/user');
+const Image = require('../models/image')
 const utils = require('../utils');
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -96,7 +97,7 @@ function create_user(req, res, next) {
 }
 
 function get_user(req, res, next) {
-  const user_id = req.params.user;
+  const user_id = req.params.id;
 
   User.findOne({ _id: user_id }, (err, user) => {
     if (err) {
@@ -107,7 +108,7 @@ function get_user(req, res, next) {
       return utils.response(req, res, 404, {error: 'User not found'});
     }
 
-    return utils.response(req, res, 200, user_id);
+    return utils.response(req, res, 200, user);
   });
 }
 
@@ -119,13 +120,13 @@ function login(req, res, next) {
     }
 
     if (user) {
-      req.body.auth_user = user;
+      req.body.auth_user_id = user;
       next();
     }
     else {
       create_user(req, res)
         .then(user => {
-          req.body.auth_user = user;
+          req.body.auth_user_id = user;
           next();
         })
         .catch(err => {
@@ -135,22 +136,36 @@ function login(req, res, next) {
   });
 }
 
-function editProfile(req, res, next){
-  if (!utils.check_body_fields(req.body, ['profileImg', 'userName', 'bio'])) {
+async function editProfile(req, res, next){
+  if (!utils.check_body_fields(req.body, ['userName', 'bio'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+  if (typeof(req.body.userName) != 'string'){
+    return utils.response(req, res, 400, {error: 'Wrong userName type'});
+  }
+
+  if (typeof(req.body.bio) != 'string'){
+    return utils.response(req, res, 400, {error: 'Wrong bio type'});
+  }
+
+  if (req.body.userName.length > 30) {
+    return utils.response(req, res, 400, {error: 'Username is too long'});
+  }
+
+  if (req.body.bio.length > 250) {
+    return utils.response(req, res, 400, {error: 'Bio is too long'});
+  }
+
+  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
     profile_image: req.body.profileImg, 
     user_name: req.body.userName, 
     bio: req.body.bio
-  }}).exec(function(err, user) {
-    if (err) {
-      return utils.response(req, res, 500, {error: 'Internal server error'});
-    } else {
-      return utils.response(req, res, 200, user);
-    }
- });
+  }}, { new: true}).catch(err => {
+    return utils.response(req, res, 500, {error: 'Internal server error'});
+  })
+
+  return utils.response(req, res, 200, user);
 }
 
 function profile_image_upload(req, res, next) {
@@ -172,6 +187,7 @@ function profile_image_upload(req, res, next) {
     timestamp: Date.now(),
     originalFilename: req.files.image.name,
   });
+
   User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
     profile_image: req.files.image}}, {new:true})
   .exec(function(err, user) {

@@ -6,14 +6,15 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const utils = require("./utils")
 const uploader = require("express-fileupload");
+const path = require('path')
 
 const routers = require("./routers");
 
 // Allowed API caller origins
-const cors_domains = new Set([
+const cors_domains = [
   'http://localhost:4200',
-  'https://amimaa.com'
-]);
+  'https://amimalive.com'
+];
 
 function start_server() {
   const app = express();
@@ -21,15 +22,12 @@ function start_server() {
   app.disable('x-powered-by');
 
   // Add CORS middleware
-  app.use(cors({
-    origin: [
-      'http://localhost:4200',
-      'https://amimaa.com'
-    ]
-  }));
+  app.use(cors({ origin: cors_domains }));
 
   // Add security middleware
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+  }));
 
   // Add compression middleware
   app.use(compression());
@@ -49,6 +47,10 @@ function start_server() {
 
   // Add routes
   routers.init_router(app);
+
+  // Serve static image files
+  app.use('/post_images', express.static(path.join(__dirname, process.env.UPLOAD_PATH)));
+  app.use('/profile_images', express.static(path.join(__dirname, process.env.PROFILE_UPLOAD_PATH)));
 
   // Add 404 handler
   app.use(function(req, res, next) {
