@@ -215,8 +215,7 @@ function profile_image_upload(req, res, next) {
  });
 }
 
-function add_favourite_post(req, res, next) {
-
+async function add_favourite_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['post_id'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
@@ -229,12 +228,39 @@ function add_favourite_post(req, res, next) {
 
   return utils.response(req, res, 200, user);
 }
-  
+
+function get_favPost_by_userId(req, res, next){
+  const userId = req.params.user;
+
+  if (!db.Types.ObjectId.isValid(userId)){
+    return res.status(400).json({
+      error: 'Invalid User ID'
+    });
+  }
+
+  User.findOne({ _id: userId }, (err, user) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    return res.status(200).json(user.favorites)
+  });
+}
+
 module.exports = {
   get_user: get_user,
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,
   profile_image_upload: profile_image_upload,
-  add_favourite_post: add_favourite_post
+  add_favourite_post: add_favourite_post,
+  get_favPost_by_userId
 };
