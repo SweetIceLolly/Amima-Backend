@@ -26,10 +26,6 @@ const user_schema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  posts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post'
-  }],
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Post'
