@@ -5,7 +5,7 @@ const tokensController = require('./controllers/tokens');
 function init_router(app) {
   app.post('/post', tokensController.check_login_token, tokensController.renew_token, postsController.create_post);
   app.get('/post/:id', postsController.get_post);
-  app.delete('/post/:id', tokensController.check_login_token, tokensController.renew_token, postsController.delete_post);
+  app.delete('/deletepost/:id', tokensController.check_login_token, tokensController.renew_token, postsController.delete_post);
   app.get('/postbyuser/:id', postsController.get_post_by_userId);
   app.post('/postimage', tokensController.check_login_token, tokensController.renew_token, postsController.upload_image);
   app.post('/postimage', tokensController.check_login_token, tokensController.renew_token, usersController.profile_image_upload);
