@@ -1,8 +1,6 @@
-const { param } = require('express/lib/request');
 const Post = require('../models/post');
 const utils = require('../utils');
 const Image = require('../models/image');
-const routers = require('../routers');
 const db = require('mongoose');
 
 function create_post(req, res, next) {
@@ -12,8 +10,8 @@ function create_post(req, res, next) {
   
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
-      Array.isArray(req.body.images) == false ||
-      Array.isArray(req.body.keywords) == false) {
+      !Array.isArray(req.body.images) ||
+      !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of post'});
   }
      
@@ -74,17 +72,15 @@ function create_post(req, res, next) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
-
     return utils.response(req, res, 201, {message: 'Post created', postId: post._id });
-
   });
 }
+
 //get information about the posts, gets the post id
 function get_post(req, res, next) {
-  const postId = req.params._id;
+  const postId = req.params.id;
 
-  var ObjectId = require('mongoose').Types.ObjectId;
-  if (ObjectId.isValid(postId) == false){
+  if (!db.Types.ObjectId.isValid(postId)){
     return res.status(400).json({
       error: 'Wrong get Post ID'
     });
@@ -99,8 +95,8 @@ function get_post(req, res, next) {
       return utils.response(req, res, 404, {error: 'Post not found'});
     }
 
-    return utils.response(req, res, 200, post); //check needed
-  });
+    return utils.response(req, res, 200, post);
+  }).populate('posterId');
 }
 
 function search_post(req, res, next) {
@@ -164,9 +160,8 @@ function get_post_by_userId(req, res, next) {
   if (typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Wrong skipCount type'});
   }
-  
-  var ObjectId = require('mongoose').Types.ObjectId;
-  if (ObjectId.isValid(userId) == false){
+
+  if (!db.Types.ObjectId.isValid(userId)){
     return res.status(400).json({
       error: 'Invalid User ID'
     });
@@ -186,8 +181,7 @@ function get_post_by_userId(req, res, next) {
 function delete_post(req, res, next) {
   const postId = req.params.id;
 
-  var ObjectId = require('mongoose').Types.ObjectId;
-  if (ObjectId.isValid(postId) == false){
+  if (!db.Types.ObjectId.isValid(postId)){
     return res.status(400).json({
       error: 'Invalid Post ID'
     });
@@ -218,16 +212,15 @@ function get_newest_posts(req, res, next) {
       return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
     }
     return utils.response(req, res, 200, post);
-  }, {skip: skipCount, limit:20}).sort({postDate:-1});
+  }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
 }
 
 function edit_post(req, res, next) {
   if (!utils.check_body_fields(req.body, [ 'post_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
-  
-  var ObjectId = require('mongoose').Types.ObjectId;
-  if (ObjectId.isValid(req.body.post_id) == false){
+
+  if (!db.Types.ObjectId.isValid(req.body.post_id)){
     return res.status(400).json({
       error: 'Invalid Post ID'
     });
@@ -235,8 +228,8 @@ function edit_post(req, res, next) {
 
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
-      Array.isArray(req.body.images) == false ||
-      Array.isArray(req.body.keywords) == false) {
+      !Array.isArray(req.body.images) ||
+      !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of edit'});
   }
    
@@ -301,8 +294,7 @@ function edit_post(req, res, next) {
 function delete_post_image(req, res, next){
   const imageId = req.params.id;
 
-  var ObjectId = require('mongoose').Types.ObjectId;
-  if (ObjectId.isValid(imageId) == false){
+  if (db.Types.ObjectId.isValid(imageId) == false){
     return res.status(400).json({
       error: 'Invalid Image ID'
     });
