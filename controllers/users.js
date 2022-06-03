@@ -215,7 +215,7 @@ function profile_image_upload(req, res, next) {
  });
 }
 
-function add_favourite_post(req, res, next) {
+async function add_favourite_post(req, res, next) {
   if (!utils.check_body_fields(req.body, ['post_id'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
