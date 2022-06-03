@@ -3,6 +3,7 @@ const Image = require('../models/image')
 const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
 
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function verify_oauth_token(req, res, next) {
@@ -168,35 +169,40 @@ async function editProfile(req, res, next){
 }
 
 function profile_image_upload(req, res, next) {
+  const fs = require('fs');
+  const path = require('path');
+
+  const oldImage = Image.findOne({
+    uploaderId: req.body.auth_user_id
+  });
   if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
     return utils.response(req, res, 400, {error: 'No files were uploaded'})
   }
-
   if (req.files.image.size > Number(process.env.UPLOAD_IMAGE_SIZE)) {
     return utils.response(req, res, 400, {error: 'Image is too large'});
   }
 
-  const image = new Image({
+  const newImage = new Image({
     uploaderId: req.body.auth_user_id,
     timestamp: Date.now(),
     originalFilename: req.files.image.name,
   });
 
-  User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
-    profile_image: req.files.image.name
-  }}).exec(function(err, user) {
+  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
+    profile_image: req.files.image}}, {new:true})
+  .exec(function(err, user) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     } else {
-      return image.save((err, image) => {
+      return newImage.save((err, image) => {
         
         if (err || !image) {
           return utils.response(req, res, 500, {error: 'Internal server error'});
         }
-    
         const file_name = image._id + '.png';
-        req.files.image.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
+        req.files.newImage.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
           .then(() => {
+            fs.unlink(path.join(process.env.PROFILE_UPLOAD_PATH, oldImage.filename));
             return utils.response(req, res, 201, {message: 'Image uploaded', imageId: image._id});
           })
           .catch((err) => {
