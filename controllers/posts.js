@@ -1,4 +1,5 @@
 const Post = require('../models/post');
+const User = require('../models/user');
 const utils = require('../utils');
 const Image = require('../models/image');
 const db = require('mongoose');
@@ -37,9 +38,6 @@ function create_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
-  // Validate the image paths
-  // TODO
-
   // Check if there are too many keywords
   if (req.body.keywords.length > 10) {
     return utils.response(req, res, 400, {error: 'Too many keywords'});
@@ -72,6 +70,7 @@ function create_post(req, res, next) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
+
     return utils.response(req, res, 201, {message: 'Post created', postId: post._id });
   });
 }
@@ -187,17 +186,27 @@ function delete_post(req, res, next) {
     });
   }
 
-  Post.deleteOne({user: req.auth_user_id, _id: postId})
-    .then(() => {
-      return res.status(200).json({
-        message: 'Post deleted'
-      });
-    })
-    .catch(err => {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+  Post.findOne({ _id: postId }, (err, post) => {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+
+    if (!post) {
+      return utils.response(req, res, 404, {error: 'Post not found'});
+    }
+
+    if (post.posterId.toString() !== req.body.auth_user_id.toString()) {
+      return utils.response(req, res, 403, {error: 'Not authorized'});
+    }
+
+    post.remove((err, post) => {
+      if (err) {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
+      }
+
+      return utils.response(req, res, 200, {message: 'Post deleted'});
     });
+  });
 }
 
 function get_newest_posts(req, res, next) {

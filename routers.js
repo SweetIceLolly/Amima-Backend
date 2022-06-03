@@ -18,6 +18,7 @@ function init_router(app) {
   app.delete('/deletePostImage/:id', postsController.delete_post_image);
   app.delete('/logout', tokensController.check_login_token, tokensController.delete_token);
   app.post('/favorite/:user', usersController.add_favourite_post);  
+  app.get('/favorite/:user', usersController.get_favPost_by_userId);
 }
 
 module.exports = {
