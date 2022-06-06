@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "node index.js"
   },
   "keywords": [],
@@ -22,5 +22,13 @@
     "google-auth-library": "^8.0.2",
     "helmet": "^5.0.2",
     "mongoose": "^6.3.2"
+  },
+  "devDependencies": {
+    "jest": "^28.1.0"
+  },
+  "jest": {
+    "testPathIgnorePatterns" : [
+      "__tests__/test_utils.js"
+    ]
   }
 }
