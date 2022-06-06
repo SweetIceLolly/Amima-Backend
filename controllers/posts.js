@@ -156,7 +156,7 @@ function get_post_by_userId(req, res, next) {
   const userId = req.params.id;
   const skipCount = req.query.count;
   
-  if (typeof(skipCount) != 'number'){
+  if (skipCount && typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Wrong skipCount type'});
   }
 
@@ -174,7 +174,7 @@ function get_post_by_userId(req, res, next) {
     }
 
     return res.status(200).json(posts)
-  }, {skip: skipCount, limit:20}).sort({postDate:-1});
+  }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
 }
 
 function delete_post(req, res, next) {
