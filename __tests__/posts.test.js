@@ -51,46 +51,137 @@ module.exports.post_tests = () => {
     });
 
     test('Create a post with an invalid token', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: ['image1.png', 'image2.png'],
+        keywords: ['test', 'post']
+      };
 
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('401');
     });
 
     test('Create a post with no title', async () =>{
+      const post_content = {
+        title: '',
+        content: 'This is a test post',
+        images: ['image1.png', 'image2.png'],
+        keywords: ['test', 'post']
+      };
 
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
+      
     });
 
     test('Create a post with title too long', async () =>{
+      const post_content = {
+        title: '#'.repeat(26),
+        content: 'This is a test post',
+        images: ['image1.png', 'image2.png'],
+        keywords: ['test', 'post']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with no content', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: '',
+        images: ['image1.png', 'image2.png'],
+        keywords: ['test', 'post']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with content too long', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: '#'.repeat(2001),
+        images: ['image1.png', 'image2.png'],
+        keywords: ['test', 'post']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with no images', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: [],
+        keywords: ['test', 'post']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with too many images', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: ['image1.png','image2.png','image3.png','image4.png','image5.png','image6.png','image7.png','image8.png','image9.png','image10.png','image11.png'],
+        keywords: ['test', 'post']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with images that are not exist', async () =>{
-
+      // TODO
     });
 
     test('Create a post with invalid type of keywords', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: ['image1.png','image2.png'],
+        keywords: [1,2]
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with too many keywords', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: ['image1.png','image2.png'],
+        keywords: ['test', 'post', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+      };
+
+      return expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
     test('Create a post with invalid keywords', async () =>{
+      const post_content = {
+        title: 'Test post',
+        content: 'This is a test post',
+        images: ['image1.png','image2.png'],
+        keywords: ['#'.repeat(11)]
+      };
+
+      expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
+
+      post_content.keywords = ['/'];
+
+      expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
+
+      post_content.keywords = ['\\'];
+
+      expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
+
+      post_content.keywords = [' '];
+
+      expect(utils.http_post(utils.API_URL + '/post', post_content)).rejects.toContain('400');
 
     });
 
