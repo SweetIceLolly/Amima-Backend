@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest -- test_init.js",
     "start": "node index.js"
   },
   "keywords": [],

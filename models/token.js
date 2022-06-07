@@ -4,7 +4,7 @@ const login_token_schema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'users'
+    ref: 'User'
   },
   token: {
     type: String,
