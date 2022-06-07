@@ -75,7 +75,6 @@ function create_post(req, res, next) {
   });
 }
 
-//get information about the posts, gets the post id
 function get_post(req, res, next) {
   const postId = req.params.id;
 
@@ -95,7 +94,7 @@ function get_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, post);
-  }).populate('posterId');
+  }).populate('posterId', 'user_name profile_image bio');
 }
 
 function search_post(req, res, next) {
@@ -263,9 +262,6 @@ function edit_post(req, res, next) {
   if (req.body.content.length > 2000) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
-
-  // Validate the image paths
-  // TODO
 
   // Check if there are too many keywords
   if (req.body.keywords.length > 10) {
