@@ -109,7 +109,8 @@ function search_post(req, res, next) {
 
   Post.find({ $or: [
     { content: { $regex: searchRegex } }, 
-    { title: {$regex: searchRegex} }
+    { title: { $regex: searchRegex } },
+    { keywords: { $regex: searchRegex } },
   ]}, (err, posts) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
