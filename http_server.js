@@ -11,10 +11,10 @@ const path = require('path')
 const routers = require("./routers");
 
 // Allowed API caller origins
-const cors_domains = new Set([
+const cors_domains = [
   'http://localhost:4200',
-  'https://amimaa.com'
-]);
+  'https://amimalive.com'
+];
 
 function start_server() {
   const app = express();
@@ -22,15 +22,12 @@ function start_server() {
   app.disable('x-powered-by');
 
   // Add CORS middleware
-  app.use(cors({
-    origin: [
-      'http://localhost:4200',
-      'https://amimaa.com'
-    ]
-  }));
+  app.use(cors({ origin: cors_domains }));
 
   // Add security middleware
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+  }));
 
   // Add compression middleware
   app.use(compression());

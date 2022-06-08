@@ -55,6 +55,20 @@ function create_token(req, res, next) {
   });
 }
 
+function delete_token(req, res, next) {
+  LoginToken.deleteMany({user: req.auth_user_id})
+    .then(() => {
+      return res.status(200).json({
+        message: 'token deleted'
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: 'Internal server error'
+      })
+    })
+}
+
 function renew_token(req, res, next) {
   // Note: the token is in the body's auth_token field
   // Extend the token's expiration time
@@ -78,5 +92,6 @@ function renew_token(req, res, next) {
 module.exports = {
   check_login_token: check_login_token,
   create_token: create_token,
-  renew_token: renew_token
+  renew_token: renew_token,
+  delete_token: delete_token
 };
