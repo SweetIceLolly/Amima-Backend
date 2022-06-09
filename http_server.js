@@ -13,7 +13,8 @@ const routers = require("./routers");
 // Allowed API caller origins
 const cors_domains = [
   'http://localhost:4200',
-  'https://amimalive.com'
+  'https://amimalive.com',
+  'https://www.amimalive.com',
 ];
 
 function start_server() {
