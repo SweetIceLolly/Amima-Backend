@@ -262,16 +262,14 @@ function get_favPost_by_userId(req, res, next){
 function delete_favourite_post(req, res, next) {
   const postId = req.params.id;
   User.updateOne({ _id: req.body.auth_user_id },
-    {$pull: {favorites: { _id: postId} }}, (err, user, post) => {
+    {$pull: {favorites: postId }}, (err, user) => {
       if (err) {
         return utils.response(req, res, 500, {error: 'Internal server error'});
       }
       if (!user) {
         return utils.response(req, res, 404, {error: 'User not found'});
       }
-      if (!post) {
-        return utils.response(req, res, 404, {error: 'Post not found'});
-      }
+      return utils.response(req, res, 200, {message:'Post removed'});
 });
 }
 
