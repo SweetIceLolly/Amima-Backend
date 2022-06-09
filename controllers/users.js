@@ -273,7 +273,7 @@ function delete_favourite_post(req, res, next) {
 }
 
 function check_favourite_post(req, res, next) {
-  const postId = req.params.post_id
+  const postId = req.params.postId
 
   if (!db.Types.ObjectId.isValid(postId)){
     return res.status(400).json({
@@ -281,7 +281,7 @@ function check_favourite_post(req, res, next) {
     });
   }
   
-  User.findOne({ _id: req.auth_user_id }, (err, user) => {
+  User.findOne({ _id: req.body.auth_user_id }, (err, user) => {
     if (err) {
       return res.status(500).json({
         error: 'Internal server error'
@@ -295,7 +295,7 @@ function check_favourite_post(req, res, next) {
     }
 
     return res.status(200).json({
-      check: (postId in user.favorites)
+      check: user.favorites.map(item => item.toString()).includes(postId)
     });
   });
 }
