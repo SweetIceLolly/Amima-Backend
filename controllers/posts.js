@@ -109,7 +109,8 @@ function search_post(req, res, next) {
 
   Post.find({ $or: [
     { content: { $regex: searchRegex } }, 
-    { title: {$regex: searchRegex} }
+    { title: { $regex: searchRegex } },
+    { keywords: { $regex: searchRegex } },
   ]}, (err, posts) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
@@ -224,11 +225,11 @@ function get_newest_posts(req, res, next) {
 }
 
 function edit_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, [ 'post_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
+  if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  if (!db.Types.ObjectId.isValid(req.body.post_id)){
+  if (!db.Types.ObjectId.isValid(req.body._id)){
     return res.status(400).json({
       error: 'Invalid Post ID'
     });
@@ -282,7 +283,7 @@ function edit_post(req, res, next) {
     }
   }
 
-  Post.findOneAndUpdate({ _id : req.body.post_id }, { "$set": {
+  Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
     title: req.body.title,  
     content: req.body.content,
     images: req.body.images,
