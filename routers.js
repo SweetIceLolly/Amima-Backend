@@ -19,6 +19,8 @@ function init_router(app) {
   app.delete('/logout', tokensController.check_login_token, tokensController.delete_token);
   app.post('/favorite/:user', usersController.add_favourite_post);  
   app.get('/favorite/:user', usersController.get_favPost_by_userId);
+  app.put('/deletefavouriteposts/:id', tokensController.check_login_token, tokensController.renew_token, usersController.delete_favourite_post);
+
 }
 
 module.exports = {
