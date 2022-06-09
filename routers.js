@@ -20,7 +20,7 @@ function init_router(app) {
   app.delete('/logout', tokensController.check_login_token, tokensController.delete_token);
   app.post('/favourite', tokensController.check_login_token, tokensController.renew_token, usersController.add_favourite_post);  
   app.get('/favourite/:user', usersController.get_favPost_by_userId);
-  app.get('/favourite/:postId', tokensController.check_login_token, tokensController.renew_token, usersController.check_favourite_post);
+  app.get('/checkFavourite/:postId', tokensController.check_login_token, tokensController.renew_token, usersController.check_favourite_post);
   app.put('/deletefavouriteposts/:id', tokensController.check_login_token, tokensController.renew_token, usersController.delete_favourite_post);
   app.get('/comments/:id', commentsController.get_comments);
   app.post('/comment', tokensController.check_login_token, tokensController.renew_token, commentsController.create_comment);
