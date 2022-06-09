@@ -1,6 +1,21 @@
+const db = require('mongoose');
 const Comment = require('../models/comment');
 const utils = require('../utils');
-const db = require('mongoose');
+
+function get_comments(req, res, next) {
+	const post_Id = req.params.id;
+	Comment.find({ postId: post_Id }, (err, comments) => {
+			if (err) {
+			return utils.response(req, res, 500, {error: 'Internal server error'});
+			}
+
+			if (!comments) {
+			return utils.response(req, res, 204, {error: 'No Comments Posted'});
+			}
+
+			return utils.response(req, res, 200, comments);
+	}).populate('userId', 'profile_image user_name');
+}
 
 function create_comment(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'content', 'postId'])) {
@@ -69,5 +84,6 @@ function delete_comment(req, res, next) {
 
 module.exports = {
   create_comment: create_comment,
-  delete_comment: delete_comment
+  delete_comment: delete_comment,
+  get_comments: get_comments,
 }
