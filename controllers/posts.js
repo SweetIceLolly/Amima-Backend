@@ -104,7 +104,7 @@ function search_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Wrong searchterm type'});
   }
   
-  const searchRegex = new RegExp('.*' + utils.sanitize_search_term(searchTerm) + ".*");
+  const searchRegex = new RegExp('.*' + utils.sanitize_search_term(searchTerm) + ".*", 'i');
   const skipCount = req.query.count || 0;
 
   Post.find({ $or: [
