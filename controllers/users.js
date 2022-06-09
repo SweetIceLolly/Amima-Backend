@@ -220,8 +220,8 @@ async function add_favourite_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
-  const user = await User.findOneAndUpdate({ _id : req.body.post_id }, { "$push": {
-    favorites: req.body.favorites
+  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$push": {
+    favorites: req.body.post_id
   }}, { new: true }).catch(err => {
     return utils.response(req, res, 500, {error: 'Internal server error'});
   })
