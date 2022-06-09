@@ -98,13 +98,13 @@ function get_post(req, res, next) {
 }
 
 function search_post(req, res, next) {
-  var searchTerm = req.query.searchterm;
+  const searchTerm = req.query.searchterm;
 
   if (typeof(searchTerm) != 'string'){
     return utils.response(req, res, 400, {error: 'Wrong searchterm type'});
   }
   
-  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  const searchRegex = new RegExp('.*' + utils.sanitize_search_term(searchTerm) + ".*");
   const skipCount = req.query.count || 0;
 
   Post.find({ $or: [
@@ -117,7 +117,7 @@ function search_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, posts);
-  }, {skip: skipCount, limit: 20}).sort({postDate:-1});
+  }, {skip: skipCount, limit: 20}).populate('posterId', 'user_name profile_image').sort({postDate: -1});
 }
 
 function upload_image(req, res, next) {
