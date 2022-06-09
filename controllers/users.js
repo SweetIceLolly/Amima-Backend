@@ -3,7 +3,7 @@ const Image = require('../models/image')
 const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
 const Post = require('../models/post');
-
+const db = require('mongoose');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -252,7 +252,10 @@ function get_favPost_by_userId(req, res, next){
     }
 
     return res.status(200).json(user.favorites)
-  });
+  }).populate({
+    path: 'favorites',
+    populate: { path: 'posterId' }
+});
 }
 
 function delete_favourite_post(req, res, next) {
@@ -280,7 +283,7 @@ module.exports = {
   verify_oauth_token: verify_oauth_token,
   profile_image_upload: profile_image_upload,
   add_favourite_post: add_favourite_post,
-  get_favPost_by_userId,
+  get_favPost_by_userId: get_favPost_by_userId,
   delete_favourite_post: delete_favourite_post
 
 };
