@@ -18,8 +18,8 @@ function init_router(app) {
   app.post('/editPost', tokensController.check_login_token, tokensController.renew_token, postsController.edit_post);
   app.delete('/deletePostImage/:id', postsController.delete_post_image);
   app.delete('/logout', tokensController.check_login_token, tokensController.delete_token);
-  app.post('/favorite/:user', usersController.add_favourite_post);  
-  app.get('/favorite/:user', usersController.get_favPost_by_userId);
+  app.post('/favourite', tokensController.check_login_token, tokensController.renew_token, usersController.add_favourite_post );  
+  app.get('/favourite/:user', usersController.get_favPost_by_userId);
   app.put('/deletefavouriteposts/:id', tokensController.check_login_token, tokensController.renew_token, usersController.delete_favourite_post);
   app.get('/comments/:id', commentsController.get_comments);
   app.post('/comment', tokensController.check_login_token, tokensController.renew_token, commentsController.create_comment);
