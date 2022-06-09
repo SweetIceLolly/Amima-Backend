@@ -3,7 +3,6 @@ const utils = require('../utils');
 const db = require('mongoose');
 
 function create_comment(req, res, next) {
-
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'content', 'postId'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
