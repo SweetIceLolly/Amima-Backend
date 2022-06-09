@@ -3,6 +3,7 @@ const Image = require('../models/image')
 const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
 const Post = require('../models/post');
+const db = require('mongoose');
 
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -269,8 +270,34 @@ function delete_favourite_post(req, res, next) {
         return utils.response(req, res, 404, {error: 'Post not found'});
       }
 });
+}
 
+function check_favourite_post(req, res, next) {
+  const postId = req.params.post_id
 
+  if (!db.Types.ObjectId.isValid(postId)){
+    return res.status(400).json({
+      error: 'Invalid Post ID'
+    });
+  }
+  
+  User.findOne({ _id: req.auth_user_id }, (err, user) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    return res.status(200).json({
+      check: (postId in user.favorites)
+    });
+  });
 }
 
 module.exports = {
@@ -281,6 +308,6 @@ module.exports = {
   profile_image_upload: profile_image_upload,
   add_favourite_post: add_favourite_post,
   get_favPost_by_userId,
-  delete_favourite_post: delete_favourite_post
-
+  delete_favourite_post: delete_favourite_post,
+  check_favourite_post: check_favourite_post
 };
