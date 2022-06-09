@@ -255,6 +255,24 @@ function get_favPost_by_userId(req, res, next){
   });
 }
 
+function delete_favourite_post(req, res, next) {
+  const postId = req.params.id;
+  User.updateOne({ _id: req.body.auth_user_id },
+    {$pull: {favorites: { _id: postId} }}, (err, user, post) => {
+      if (err) {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
+      }
+      if (!user) {
+        return utils.response(req, res, 404, {error: 'User not found'});
+      }
+      if (!post) {
+        return utils.response(req, res, 404, {error: 'Post not found'});
+      }
+});
+
+
+}
+
 module.exports = {
   get_user: get_user,
   login: login,
@@ -262,5 +280,7 @@ module.exports = {
   verify_oauth_token: verify_oauth_token,
   profile_image_upload: profile_image_upload,
   add_favourite_post: add_favourite_post,
-  get_favPost_by_userId
+  get_favPost_by_userId,
+  delete_favourite_post: delete_favourite_post
+
 };
