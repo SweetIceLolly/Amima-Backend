@@ -1,6 +1,7 @@
 const postsController = require('./controllers/posts');
 const usersController = require('./controllers/users');
 const tokensController = require('./controllers/tokens');
+const commentController = require('./controllers/comments');
 
 function init_router(app) {
   app.post('/post', tokensController.check_login_token, tokensController.renew_token, postsController.create_post);
@@ -20,6 +21,8 @@ function init_router(app) {
   app.post('/favorite/:user', usersController.add_favourite_post);  
   app.get('/favorite/:user', usersController.get_favPost_by_userId);
   app.put('/deletefavouriteposts/:id', tokensController.check_login_token, tokensController.renew_token, usersController.delete_favourite_post);
+  app.post('/comment', tokensController.check_login_token, tokensController.renew_token, commentController.create_comment);
+  app.delete('/deletecomment/:id', tokensController.check_login_token, tokensController.renew_token, commentController.delete_comment);
 
 }
 

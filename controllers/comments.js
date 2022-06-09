@@ -3,7 +3,6 @@ const utils = require('../utils');
 const db = require('mongoose');
 
 function create_comment(req, res, next) {
-
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'content', 'postId'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
@@ -34,4 +33,41 @@ function create_comment(req, res, next) {
 
     return utils.response(req, res, 201, {message: 'Comment created', commentId: comment._id });
   });
+}
+
+function delete_comment(req, res, next) {
+  const commentId = req.params.commentId;
+  
+  if (!db.Types.ObjectId.isValid(commentId)) {
+    return res.status(400).json({
+      error: 'Invalid Comment ID'
+    });
+  }
+
+  Comment.findOne({ _id: commentId }, (err, comment) => {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+
+    if (!comment) {
+      return utils.response(req, res, 404, {error: 'Comment not found'});
+    }
+
+    if (comment.userId != req.body.auth_user_id) {
+      return utils.response(req, res, 403, {error: 'You are not allowed to delete this comment'});
+    }
+
+    comment.remove((err) => {
+      if (err) {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
+      }
+
+      return utils.response(req, res, 200, {message: 'Comment deleted'});
+    });
+  });
+}
+
+module.exports = {
+  create_comment: create_comment,
+  delete_comment: delete_comment
 }
