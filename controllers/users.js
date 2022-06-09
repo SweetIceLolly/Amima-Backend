@@ -169,11 +169,11 @@ async function editProfile(req, res, next){
   return utils.response(req, res, 200, user);
 }
 
-function profile_image_upload(req, res, next) {
+async function profile_image_upload(req, res, next) {
   const fs = require('fs');
   const path = require('path');
 
-  const oldImage = Image.findOne({
+  const oldImage = await Image.findOne({
     uploaderId: req.body.auth_user_id
   });
   if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
@@ -185,34 +185,35 @@ function profile_image_upload(req, res, next) {
 
   const newImage = new Image({
     uploaderId: req.body.auth_user_id,
-    timestamp: Date.now(),
     originalFilename: req.files.image.name,
   });
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
-    profile_image: req.files.image}}, {new:true})
-  .exec(function(err, user) {
-    if (err) {
+  newImage.save((err, image) => {
+    if (err || !image) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
-    } else {
-      return newImage.save((err, image) => {
-        
-        if (err || !image) {
-          return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+
+    const file_name = image._id + '.png';
+    req.files.image.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
+      .then(() => {
+        if (oldImage) {
+          fs.unlink(process.env.PROFILE_UPLOAD_PATH + oldImage._id.toString() + '.png', (err) => {});
         }
-        const file_name = image._id + '.png';
-        req.files.newImage.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
-          .then(() => {
-            fs.unlink(path.join(process.env.PROFILE_UPLOAD_PATH, oldImage.filename));
+
+        User.findOneAndUpdate({ _id: req.body.auth_user_id }, { "$set": {
+          profile_image: file_name
+        }}, { new: true})
+          .then(user => {
             return utils.response(req, res, 201, {message: 'Image uploaded', imageId: image._id});
           })
-          .catch((err) => {
+          .catch(err => {
             return utils.response(req, res, 500, {error: 'Internal server error'});
           });
-
+      })
+      .catch(err => {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
       });
-    }
- });
+  });
 }
 
 async function add_favourite_post(req, res, next) {
@@ -272,8 +273,34 @@ function delete_favourite_post(req, res, next) {
         return utils.response(req, res, 404, {error: 'Post not found'});
       }
 });
+}
 
+function check_favourite_post(req, res, next) {
+  const postId = req.params.postId
 
+  if (!db.Types.ObjectId.isValid(postId)){
+    return res.status(400).json({
+      error: 'Invalid Post ID'
+    });
+  }
+  
+  User.findOne({ _id: req.body.auth_user_id }, (err, user) => {
+    if (err) {
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    return res.status(200).json({
+      check: user.favorites.map(item => item.toString()).includes(postId)
+    });
+  });
 }
 
 module.exports = {
@@ -284,6 +311,8 @@ module.exports = {
   profile_image_upload: profile_image_upload,
   add_favourite_post: add_favourite_post,
   get_favPost_by_userId: get_favPost_by_userId,
-  delete_favourite_post: delete_favourite_post
-
+  delete_favourite_post: delete_favourite_post,
+  get_favPost_by_userId: get_favPost_by_userId,
+  delete_favourite_post: delete_favourite_post,
+  check_favourite_post: check_favourite_post
 };
