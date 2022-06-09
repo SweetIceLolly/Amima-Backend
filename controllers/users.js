@@ -169,11 +169,11 @@ async function editProfile(req, res, next){
   return utils.response(req, res, 200, user);
 }
 
-function profile_image_upload(req, res, next) {
+async function profile_image_upload(req, res, next) {
   const fs = require('fs');
   const path = require('path');
 
-  const oldImage = Image.findOne({
+  const oldImage = await Image.findOne({
     uploaderId: req.body.auth_user_id
   });
   if (!req.files || !req.files.image || Object.keys(req.files).length === 0) {
@@ -185,34 +185,35 @@ function profile_image_upload(req, res, next) {
 
   const newImage = new Image({
     uploaderId: req.body.auth_user_id,
-    timestamp: Date.now(),
     originalFilename: req.files.image.name,
   });
 
-  User.findOneAndUpdate({ _id : req.body.auth_user }, { "$set": {
-    profile_image: req.files.image}}, {new:true})
-  .exec(function(err, user) {
-    if (err) {
+  newImage.save((err, image) => {
+    if (err || !image) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
-    } else {
-      return newImage.save((err, image) => {
-        
-        if (err || !image) {
-          return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+
+    const file_name = image._id + '.png';
+    req.files.image.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
+      .then(() => {
+        if (oldImage) {
+          fs.unlink(process.env.PROFILE_UPLOAD_PATH + oldImage._id.toString() + '.png', (err) => {});
         }
-        const file_name = image._id + '.png';
-        req.files.newImage.mv(process.env.PROFILE_UPLOAD_PATH + file_name)
-          .then(() => {
-            fs.unlink(path.join(process.env.PROFILE_UPLOAD_PATH, oldImage.filename));
+
+        User.findOneAndUpdate({ _id: req.body.auth_user_id }, { "$set": {
+          profile_image: file_name
+        }}, { new: true})
+          .then(user => {
             return utils.response(req, res, 201, {message: 'Image uploaded', imageId: image._id});
           })
-          .catch((err) => {
+          .catch(err => {
             return utils.response(req, res, 500, {error: 'Internal server error'});
           });
-
+      })
+      .catch(err => {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
       });
-    }
- });
+  });
 }
 
 async function add_favourite_post(req, res, next) {
