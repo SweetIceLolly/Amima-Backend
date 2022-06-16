@@ -158,8 +158,7 @@ async function editProfile(req, res, next){
     return utils.response(req, res, 400, {error: 'Bio is too long'});
   }
 
-  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
-    profile_image: req.body.profileImg, 
+  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": { 
     user_name: req.body.userName, 
     bio: req.body.bio
   }}, { new: true}).catch(err => {
