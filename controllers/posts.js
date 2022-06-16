@@ -216,15 +216,9 @@ function get_newest_posts(req, res, next) {
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
 
-  // Post.find((err, post) => {
-  //   if (err) {
-  //     return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
-  //   }
-  //   return utils.response(req, res, 200, post);
-  // }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1}).limit(20);
-
   Post
     .find()
+    .populate('userId', 'user_name profile_image')
     .sort({postDate: -1})
     .skip(skipCount)
     .limit(20)
