@@ -36,9 +36,9 @@ function create_comment(req, res, next) {
   }
 
   const comment = new Comment({
-    content: re.body.content,
-    postId: re.body.postId,
-    userId: re.body.auth_user_id
+    content: req.body.content,
+    postId: req.body.postId,
+    userId: req.body.auth_user_id
   });
 
   comment.save((err, comment) => {
