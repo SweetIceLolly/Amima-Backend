@@ -14,7 +14,7 @@ function get_comments(req, res, next) {
 			}
 
 			return utils.response(req, res, 200, comments);
-	}).populate('userId', 'profile_image user_name');
+	}).populate('userId', 'profile_image user_name').sort({created_at:-1});
 }
 
 function create_comment(req, res, next) {
