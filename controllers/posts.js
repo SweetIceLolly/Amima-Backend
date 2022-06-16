@@ -210,18 +210,30 @@ function delete_post(req, res, next) {
 }
 
 function get_newest_posts(req, res, next) {
-  const skipCount = req.query.count || 0;
+  const skipCount = parseInt(req.query.count) || 0;
 
   if (typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
 
-  Post.find((err, post) => {
-    if (err) {
-      return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
-    }
-    return utils.response(req, res, 200, post);
-  }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
+  // Post.find((err, post) => {
+  //   if (err) {
+  //     return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
+  //   }
+  //   return utils.response(req, res, 200, post);
+  // }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1}).limit(20);
+
+  Post
+    .find()
+    .sort({postDate: -1})
+    .skip(skipCount)
+    .limit(20)
+    .exec(function(err, posts) {
+      if (err) {
+        return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
+      }
+      return utils.response(req, res, 200, posts);
+    });
 }
 
 function edit_post(req, res, next) {
