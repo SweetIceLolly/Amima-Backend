@@ -218,7 +218,7 @@ function get_newest_posts(req, res, next) {
 
   Post
     .find()
-    .populate('userId', 'user_name profile_image')
+    .populate('posterId', 'user_name profile_image')
     .sort({postDate: -1})
     .skip(skipCount)
     .limit(20)
