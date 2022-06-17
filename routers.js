@@ -25,7 +25,7 @@ function init_router(app) {
   app.delete('/favourite/:id', tokensController.check_login_token, tokensController.renew_token, favouritesController.delete_favourite_post);
   app.get('/comments/:id', commentsController.get_comments);
   app.post('/comment', tokensController.check_login_token, tokensController.renew_token, commentsController.create_comment);
-  app.delete('/deletecomment/:id', tokensController.check_login_token, tokensController.renew_token, commentsController.delete_comment);
+  app.delete('/deletecomment/:commentId', tokensController.check_login_token, tokensController.renew_token, commentsController.delete_comment);
 }
 
 module.exports = {
