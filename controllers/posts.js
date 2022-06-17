@@ -99,9 +99,13 @@ function get_post(req, res, next) {
 
 function search_post(req, res, next) {
   const searchTerm = req.query.searchterm;
+  const skipCount = Number(req.query.count) || 0;
 
-  if (typeof(searchTerm) != 'string'){
+  if (typeof(searchTerm) != 'string') {
     return utils.response(req, res, 400, {error: 'Wrong searchterm type'});
+  }
+  if (typeof(skipCount) != 'number') {
+    return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
   
   const searchRegex = new RegExp('.*' + utils.sanitize_search_term(searchTerm) + ".*", 'i');
@@ -212,7 +216,7 @@ function delete_post(req, res, next) {
 function get_newest_posts(req, res, next) {
   const skipCount = parseInt(req.query.count) || 0;
 
-  if (typeof(skipCount) != 'number'){
+  if (typeof(skipCount) != 'number') {
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
 
