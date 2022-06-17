@@ -25,11 +25,7 @@ const user_schema = new mongoose.Schema({
   created_at: {
     type: Date,
     default: Date.now
-  },
-  favorites: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post'
-  }]
+  }
 });
 
 const User = mongoose.model('User', user_schema);

@@ -93,7 +93,6 @@ function create_user(req, res, next) {
     bio: process.env.DEFAULT_BIO,
     created_at: new Date(),
     posts: [],
-    favorites: [],
   });
 }
 
@@ -215,101 +214,10 @@ async function profile_image_upload(req, res, next) {
   });
 }
 
-async function add_favourite_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['post_id'])) {
-    return utils.response(req, res, 400, {error: 'Missing required fields'});
-  }
-
-  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$push": {
-    favorites: req.body.post_id
-  }}, { new: true }).catch(err => {
-    return utils.response(req, res, 500, {error: 'Internal server error'});
-  })
-
-  return utils.response(req, res, 200, user);
-}
-
-function get_favPost_by_userId(req, res, next){
-  const userId = req.params.user;
-
-  if (!db.Types.ObjectId.isValid(userId)){
-    return res.status(400).json({
-      error: 'Invalid User ID'
-    });
-  }
-
-  User.findOne({ _id: userId }, (err, user) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-
-    return res.status(200).json(user.favorites)
-  }).populate({
-    path: 'favorites',
-    populate: { path: 'posterId' }
-});
-}
-
-function delete_favourite_post(req, res, next) {
-  const postId = req.params.id;
-  User.updateOne({ _id: req.body.auth_user_id },
-    {$pull: {favorites: postId }}, (err, user) => {
-      if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
-      }
-      if (!user) {
-        return utils.response(req, res, 404, {error: 'User not found'});
-      }
-      return utils.response(req, res, 200, {message:'Post removed'});
-});
-}
-
-function check_favourite_post(req, res, next) {
-  const postId = req.params.postId
-
-  if (!db.Types.ObjectId.isValid(postId)){
-    return res.status(400).json({
-      error: 'Invalid Post ID'
-    });
-  }
-  
-  User.findOne({ _id: req.body.auth_user_id }, (err, user) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-
-    return res.status(200).json({
-      check: user.favorites.map(item => item.toString()).includes(postId)
-    });
-  });
-}
-
 module.exports = {
   get_user: get_user,
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,
-  profile_image_upload: profile_image_upload,
-  add_favourite_post: add_favourite_post,
-  get_favPost_by_userId: get_favPost_by_userId,
-  delete_favourite_post: delete_favourite_post,
-  get_favPost_by_userId: get_favPost_by_userId,
-  delete_favourite_post: delete_favourite_post,
-  check_favourite_post: check_favourite_post
+  profile_image_upload: profile_image_upload
 };
