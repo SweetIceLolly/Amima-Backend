@@ -17,11 +17,8 @@ async function get_favPost_by_userId(req, res, next) {
         error: 'Internal server error'
       });
     }
-    return res.status(200).json(favourites);
-  }).populate({
-    path: 'postId',
-    populate: { path: 'posterId' }
-  });
+    return res.status(200).json(favourites.map(favourite => favourite.postId));
+  }).populate({path: 'postId', populate: {path: 'posterId', select: 'user_name profile_image'}});
 }
 
 async function add_favourite_post(req, res, next) {
