@@ -11,6 +11,7 @@ const path = require('path')
 const routers = require("./routers");
 
 // Allowed API caller origins
+require('dotenv').config();
 const cors_domains = process.env.CORS_DOMAINS.split(';');
 
 function start_server() {

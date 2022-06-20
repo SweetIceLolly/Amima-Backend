@@ -2,8 +2,6 @@ const db = require('./db');
 const server = require('./http_server');
 
 async function main() {
-  require('dotenv').config();
-
   console.log('Connecting to the database...');
   db.connect()
     .then(() => {
