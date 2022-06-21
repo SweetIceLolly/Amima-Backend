@@ -54,14 +54,10 @@ async function delete_favourite_post(req, res, next) {
 
   Favourites.deleteOne({ userId: req.body.auth_user_id, postId: postId }, (err, favourite) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, { error: 'Internal server error' });
     }
     if (!favourite) {
-      return res.status(404).json({
-        error: 'Favourite not found'
-      });
+      return utils.response(req, res, 404, { error: 'Favourite not found' });
     }
 
     return res.status(200).json({
@@ -74,16 +70,12 @@ async function check_favourite_post(req, res, next) {
   const postId = req.params.postId;
 
   if (!db.Types.ObjectId.isValid(postId)) {
-    return res.status(400).json({
-      error: 'Invalid Post ID'
-    });
+    return utils.response(req, res, 400, { error: 'Invalid Post ID' });
   }
 
   Favourites.findOne({ userId: req.body.auth_user_id, postId: postId }, (err, favourite) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, { error: 'Internal server error' });
     }
 
     // Return true if the user has that favourite post
@@ -93,9 +85,21 @@ async function check_favourite_post(req, res, next) {
   });
 }
 
+function favourite_counter(req, res, next) {
+  const postId = req.params.postId;
+  Favourites.countDocuments({ postId: postId }, (err, count) => {
+    if (err) {
+      return utils.response(req, res, 500, { error: 'Internal server error' });
+    }
+
+    return utils.response(req, res, 200, {count: count});
+  });
+}
+
 module.exports = {
   get_favPost_by_userId: get_favPost_by_userId,
   add_favourite_post: add_favourite_post,
   delete_favourite_post: delete_favourite_post,
-  check_favourite_post: check_favourite_post
+  check_favourite_post: check_favourite_post,
+  favourite_counter: favourite_counter
 }

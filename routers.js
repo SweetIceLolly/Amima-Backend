@@ -21,6 +21,7 @@ function init_router(app) {
   app.delete('/logout', tokensController.check_login_token, tokensController.delete_token);
   app.post('/favourite', tokensController.check_login_token, tokensController.renew_token, favouritesController.add_favourite_post);
   app.get('/favourite/:user', favouritesController.get_favPost_by_userId);
+  app.get('/favouriteCount/:postId', favouritesController.favourite_counter);
   app.get('/checkFavourite/:postId', tokensController.check_login_token, tokensController.renew_token, favouritesController.check_favourite_post);
   app.delete('/favourite/:id', tokensController.check_login_token, tokensController.renew_token, favouritesController.delete_favourite_post);
   app.get('/comments/:id', commentsController.get_comments);
