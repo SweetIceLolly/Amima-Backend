@@ -224,7 +224,7 @@ function get_newest_posts(req, res, next) {
     .limit(20)
     .exec(function(err, posts) {
       if (err) {
-        return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
+        return utils.response(req, res, 500, {error: 'Internal server error'});
       }
       return utils.response(req, res, 200, posts);
     });
