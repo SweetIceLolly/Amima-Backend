@@ -261,7 +261,7 @@ function edit_post(req, res, next) {
   }
 
   // Check if title is too long
-  if (req.body.title.length > 25) {
+  if (req.body.title.length > 150) {
     return utils.response(req, res, 400, {error: 'Title is too long'});
   }
 
