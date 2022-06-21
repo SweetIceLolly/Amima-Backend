@@ -11,11 +11,8 @@ const path = require('path')
 const routers = require("./routers");
 
 // Allowed API caller origins
-const cors_domains = [
-  'http://localhost:4200',
-  'https://amimalive.com',
-  'https://www.amimalive.com',
-];
+require('dotenv').config();
+const cors_domains = process.env.CORS_DOMAINS.split(';');
 
 function start_server() {
   const app = express();

@@ -5,7 +5,6 @@ const { OAuth2Client } = require('google-auth-library');
 const Post = require('../models/post');
 const db = require('mongoose');
 
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function verify_oauth_token(req, res, next) {
@@ -94,7 +93,6 @@ function create_user(req, res, next) {
     bio: process.env.DEFAULT_BIO,
     created_at: new Date(),
     posts: [],
-    favorites: [],
   });
 }
 
@@ -159,8 +157,7 @@ async function editProfile(req, res, next){
     return utils.response(req, res, 400, {error: 'Bio is too long'});
   }
 
-  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": {
-    profile_image: req.body.profileImg, 
+  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$set": { 
     user_name: req.body.userName, 
     bio: req.body.bio
   }}, { new: true}).catch(err => {
@@ -217,98 +214,10 @@ async function profile_image_upload(req, res, next) {
   });
 }
 
-async function add_favourite_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['post_id'])) {
-    return utils.response(req, res, 400, {error: 'Missing required fields'});
-  }
-
-  const user = await User.findOneAndUpdate({ _id : req.body.auth_user_id }, { "$push": {
-    favorites: req.body.post_id
-  }}, { new: true }).catch(err => {
-    return utils.response(req, res, 500, {error: 'Internal server error'});
-  })
-
-  return utils.response(req, res, 200, user);
-}
-
-function get_favPost_by_userId(req, res, next){
-  const userId = req.params.user;
-
-  if (!db.Types.ObjectId.isValid(userId)){
-    return res.status(400).json({
-      error: 'Invalid User ID'
-    });
-  }
-
-  User.findOne({ _id: userId }, (err, user) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-
-    return res.status(200).json(user.favorites)
-  });
-}
-
-function delete_favourite_post(req, res, next) {
-  const postId = req.params.id;
-  User.updateOne({ _id: req.body.auth_user_id },
-    {$pull: {favorites: { _id: postId} }}, (err, user, post) => {
-      if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
-      }
-      if (!user) {
-        return utils.response(req, res, 404, {error: 'User not found'});
-      }
-      if (!post) {
-        return utils.response(req, res, 404, {error: 'Post not found'});
-      }
-});
-}
-
-function check_favourite_post(req, res, next) {
-  const postId = req.params.post_id
-
-  if (!db.Types.ObjectId.isValid(postId)){
-    return res.status(400).json({
-      error: 'Invalid Post ID'
-    });
-  }
-  
-  User.findOne({ _id: req.auth_user_id }, (err, user) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found'
-      });
-    }
-
-    return res.status(200).json({
-      check: (postId in user.favorites)
-    });
-  });
-}
-
 module.exports = {
   get_user: get_user,
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,
-  profile_image_upload: profile_image_upload,
-  add_favourite_post: add_favourite_post,
-  get_favPost_by_userId,
-  delete_favourite_post: delete_favourite_post,
-  check_favourite_post: check_favourite_post
+  profile_image_upload: profile_image_upload
 };

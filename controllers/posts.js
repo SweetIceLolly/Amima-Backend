@@ -29,7 +29,7 @@ function create_post(req, res, next) {
   }
 
   // Check if title is too long
-  if (req.body.title.length > 25) {
+  if (req.body.title.length > 150) {
     return utils.response(req, res, 400, {error: 'Title is too long'});
   }
 
@@ -98,13 +98,13 @@ function get_post(req, res, next) {
 }
 
 function search_post(req, res, next) {
-  var searchTerm = req.query.searchterm;
+  const searchTerm = req.query.searchterm;
 
   if (typeof(searchTerm) != 'string'){
     return utils.response(req, res, 400, {error: 'Wrong searchterm type'});
   }
   
-  var searchRegex = new RegExp('.*' + searchTerm + ".*"); //searches for any string
+  const searchRegex = new RegExp('.*' + utils.sanitize_search_term(searchTerm) + ".*", 'i');
   const skipCount = req.query.count || 0;
 
   Post.find({ $or: [
@@ -117,7 +117,7 @@ function search_post(req, res, next) {
     }
 
     return utils.response(req, res, 200, posts);
-  }, {skip: skipCount, limit: 20}).sort({postDate:-1});
+  }, {skip: skipCount, limit: 20}).populate('posterId', 'user_name profile_image').sort({postDate: -1});
 }
 
 function upload_image(req, res, next) {
@@ -210,18 +210,24 @@ function delete_post(req, res, next) {
 }
 
 function get_newest_posts(req, res, next) {
-  const skipCount = req.query.count || 0;
+  const skipCount = parseInt(req.query.count) || 0;
 
   if (typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
 
-  Post.find((err, post) => {
-    if (err) {
-      return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
-    }
-    return utils.response(req, res, 200, post);
-  }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
+  Post
+    .find()
+    .populate('posterId', 'user_name profile_image')
+    .sort({postDate: -1})
+    .skip(skipCount)
+    .limit(20)
+    .exec(function(err, posts) {
+      if (err) {
+        return utils.response(req, res, 500, utils.response(req, res, 500, {error: 'Internal server error'}));
+      }
+      return utils.response(req, res, 200, posts);
+    });
 }
 
 function edit_post(req, res, next) {

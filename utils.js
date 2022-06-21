@@ -30,6 +30,10 @@ function is_valid_keyword(keyword) {
   );
 }
 
+function sanitize_search_term(searchterm) {
+  return searchterm.replace(/[^a-zA-Z0-9 ]/g, '');
+}
+
 function response(req, res, code, content) {
   try {
     const log = new Log({
@@ -57,6 +61,7 @@ module.exports = {
   generate_token,
   check_body_fields,
   is_valid_keyword,
+  sanitize_search_term,
   response,
   http_get
 };

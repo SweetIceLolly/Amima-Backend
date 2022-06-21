@@ -1,5 +1,6 @@
 const db = require('mongoose');
 const Comment = require('../models/comment');
+const User = require('../models/user');
 const utils = require('../utils');
 
 function get_comments(req, res, next) {
@@ -14,7 +15,7 @@ function get_comments(req, res, next) {
 			}
 
 			return utils.response(req, res, 200, comments);
-	}).populate('userId', 'profile_image user_name');
+	}).populate('userId', 'profile_image user_name').sort({created_at:-1});
 }
 
 function create_comment(req, res, next) {
@@ -36,17 +37,18 @@ function create_comment(req, res, next) {
   }
 
   const comment = new Comment({
-    content: re.body.content,
-    postId: re.body.postId,
-    userId: re.body.auth_user_id
+    content: req.body.content,
+    postId: req.body.postId,
+    userId: req.body.auth_user_id
   });
 
-  comment.save((err, comment) => {
+  comment.save(async (err, comment) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return utils.response(req, res, 201, {message: 'Comment created', commentId: comment._id });
+    comment.userId = await User.findOne({_id: comment.userId}, 'profile_image user_name')
+    return utils.response(req, res, 201, comment);
   });
 }
 
@@ -68,7 +70,7 @@ function delete_comment(req, res, next) {
       return utils.response(req, res, 404, {error: 'Comment not found'});
     }
 
-    if (comment.userId != req.body.auth_user_id) {
+    if (comment.userId.toString() != req.body.auth_user_id.toString()) {
       return utils.response(req, res, 403, {error: 'You are not allowed to delete this comment'});
     }
 
