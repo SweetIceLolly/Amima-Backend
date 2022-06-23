@@ -1,5 +1,5 @@
 const Post = require('../models/post');
-const User = require('../models/user');
+const Favourites = require('../models/favourite');
 const utils = require('../utils');
 const Image = require('../models/image');
 const db = require('mongoose');
@@ -34,7 +34,7 @@ function create_post(req, res, next) {
   }
 
   // Check if content is too long
-  if (req.body.content.length > 2000) {
+  if (req.body.content.length > 2500) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
@@ -186,7 +186,7 @@ function delete_post(req, res, next) {
     });
   }
 
-  Post.findOne({ _id: postId }, (err, post) => {
+  Post.findOne({ _id: postId }, async (err, post) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
@@ -199,12 +199,15 @@ function delete_post(req, res, next) {
       return utils.response(req, res, 403, {error: 'Not authorized'});
     }
 
+    // Also delete all favorites associated with this post
+    Favourites.deleteMany({ postId: postId });
+
     post.remove((err, post) => {
       if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
+        utils.response(req, res, 500, {error: 'Internal server error'});
       }
 
-      return utils.response(req, res, 200, {message: 'Post deleted'});
+      utils.response(req, res, 200, {message: 'Post deleted'});
     });
   });
 }
@@ -266,7 +269,7 @@ function edit_post(req, res, next) {
   }
 
   // Check if content is too long
-  if (req.body.content.length > 2000) {
+  if (req.body.content.length > 2500) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
