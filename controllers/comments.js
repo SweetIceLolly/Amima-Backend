@@ -32,7 +32,7 @@ function create_comment(req, res, next) {
   }
 
   // Check if content is too long
-  if (req.body.content.length > 200) {
+  if (req.body.content.length > 1500) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
@@ -70,7 +70,7 @@ function delete_comment(req, res, next) {
       return utils.response(req, res, 404, {error: 'Comment not found'});
     }
 
-    if (comment.userId.toString() != req.body.auth_user_id.toString()) {
+    if (comment.userId.toString() !== req.body.auth_user_id.toString()) {
       return utils.response(req, res, 403, {error: 'You are not allowed to delete this comment'});
     }
 

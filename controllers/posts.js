@@ -34,7 +34,7 @@ function create_post(req, res, next) {
   }
 
   // Check if content is too long
-  if (req.body.content.length > 2000) {
+  if (req.body.content.length > 2500) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
@@ -186,7 +186,7 @@ function delete_post(req, res, next) {
     });
   }
 
-  Post.findOne({ _id: postId }, (err, post) => {
+  Post.findOne({ _id: postId }, async (err, post) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
@@ -269,7 +269,7 @@ function edit_post(req, res, next) {
   }
 
   // Check if content is too long
-  if (req.body.content.length > 2000) {
+  if (req.body.content.length > 2500) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
