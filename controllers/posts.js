@@ -199,18 +199,15 @@ function delete_post(req, res, next) {
       return utils.response(req, res, 403, {error: 'Not authorized'});
     }
 
+    // Also delete all favorites associated with this post
+    Favourites.deleteMany({ postId: postId });
+
     post.remove((err, post) => {
       if (err) {
         utils.response(req, res, 500, {error: 'Internal server error'});
       }
 
       utils.response(req, res, 200, {message: 'Post deleted'});
-    });
-
-    // Also delete all favorites associated with this post
-    Favourites.deleteMany({ postId: postId }, (err) => {
-      // Only log the error
-      utils.response(req, res, 500, {error: 'Internal server error'});
     });
   });
 }
