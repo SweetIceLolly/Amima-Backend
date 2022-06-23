@@ -1,5 +1,5 @@
 const Post = require('../models/post');
-const User = require('../models/user');
+const Favourites = require('../models/favourite');
 const utils = require('../utils');
 const Image = require('../models/image');
 const db = require('mongoose');
@@ -201,10 +201,16 @@ function delete_post(req, res, next) {
 
     post.remove((err, post) => {
       if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
+        utils.response(req, res, 500, {error: 'Internal server error'});
       }
 
-      return utils.response(req, res, 200, {message: 'Post deleted'});
+      utils.response(req, res, 200, {message: 'Post deleted'});
+    });
+
+    // Also delete all favorites associated with this post
+    Favourites.deleteMany({ postId: postId }, (err) => {
+      // Only log the error
+      utils.response(req, res, 500, {error: 'Internal server error'});
     });
   });
 }
