@@ -5,12 +5,13 @@ const Image = require('../models/image');
 const db = require('mongoose');
 
 function create_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
+  if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords', 'category'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
   
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of post'});
@@ -57,6 +58,12 @@ function create_post(req, res, next) {
     }
   }
 
+  for (let category of req.body.category) {
+    if (!utils.is_valid_category(category)) {
+      return utils.response(req, res, 400, {error: 'Invalid category'});
+    }
+  }
+
   // Create the post
   const post = new Post({
     title: req.body.title,
@@ -64,6 +71,7 @@ function create_post(req, res, next) {
     keywords: req.body.keywords,
     images: req.body.images,
     posterId: req.body.auth_user_id,
+    category: req.body.category,
   });
 
   post.save((err, post) => {
@@ -234,7 +242,7 @@ function get_newest_posts(req, res, next) {
 }
 
 function edit_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
+  if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords', 'category'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
@@ -246,6 +254,7 @@ function edit_post(req, res, next) {
 
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of edit'});
@@ -292,11 +301,18 @@ function edit_post(req, res, next) {
     }
   }
 
+  for (let category of req.body.category) {
+    if (!utils.is_valid_category(category)) {
+      return utils.response(req, res, 400, {error: 'Invalid category'});
+    }
+  }
+
   Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
     title: req.body.title,  
     content: req.body.content,
     images: req.body.images,
-    keywords: req.body.keywords
+    keywords: req.body.keywords,
+    category: req.body.category
   }}).exec(function(err, post) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
