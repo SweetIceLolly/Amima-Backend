@@ -11,6 +11,7 @@ function create_post(req, res, next) {
   
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of post'});
@@ -253,6 +254,7 @@ function edit_post(req, res, next) {
 
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of edit'});
