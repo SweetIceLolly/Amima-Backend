@@ -222,25 +222,24 @@ function delete_post(req, res, next) {
 
 function get_newest_posts(req, res, next) {
   const skipCount = parseInt(req.query.count) || 0;
-
+  
   if (typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
-
   Post
-    .find()
-    .populate('posterId', 'user_name profile_image')
-    .sort({postDate: -1})
-    .skip(skipCount)
-    .limit(20)
-    .exec(function(err, posts) {
-      if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
-      }
-      return utils.response(req, res, 200, posts);
-    });
+  .find({category: post.category})
+  .populate('posterId', 'user_name profile_image')
+  .sort({postDate: -1}) 
+  .skip(skipCount)
+  .limit(20)
+  .exec(function(err, posts) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+    return utils.response(req, res, 200, posts);
+  });
 }
-
+  
 function edit_post(req, res, next) {
   if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords', 'category'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
