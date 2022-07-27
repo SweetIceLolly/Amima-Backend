@@ -21,7 +21,6 @@ const post_schema = new mongoose.Schema({
   },
   category: {
     type: String,
-    ref: 'Category',
     required: true
   }
 });
