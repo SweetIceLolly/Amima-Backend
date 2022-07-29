@@ -58,10 +58,8 @@ function create_post(req, res, next) {
     }
   }
 
-  for (let category of req.body.category) {
-    if (!utils.is_valid_category(category)) {
-      return utils.response(req, res, 400, {error: 'Invalid category'});
-    }
+  if (!utils.is_valid_category(req.body.category)) {
+    return utils.response(req, res, 400, {error: 'Invalid category'});
   }
 
   // Create the post
@@ -300,10 +298,9 @@ function edit_post(req, res, next) {
     }
   }
 
-  for (let category of req.body.category) {
-    if (!utils.is_valid_category(category)) {
-      return utils.response(req, res, 400, {error: 'Invalid category'});
-    }
+
+  if (!utils.is_valid_category(req.body.category)) {
+    return utils.response(req, res, 400, {error: 'Invalid category'});
   }
 
   Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
