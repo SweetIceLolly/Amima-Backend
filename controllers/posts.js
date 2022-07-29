@@ -71,7 +71,7 @@ function create_post(req, res, next) {
     keywords: req.body.keywords,
     images: req.body.images,
     posterId: req.body.auth_user_id,
-    category: req.body.category,
+    category: req.body.category
   });
 
   post.save((err, post) => {
@@ -227,7 +227,7 @@ function get_newest_posts(req, res, next) {
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
   Post
-  .find({category: post.category})
+  .find({})
   .populate('posterId', 'user_name profile_image')
   .sort({postDate: -1}) 
   .skip(skipCount)

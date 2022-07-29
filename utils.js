@@ -60,12 +60,12 @@ function http_get(url) {
 
 function is_valid_category(category){
   return !(
-    category !== "Technology" ||
-    category !== "Fashion" ||
-    category !== "Food" ||
-    category !== "Lifestyle" ||
-    category !== "University" ||
-    category !== "For You"
+    category !== 'Technology' ||
+    category !== 'Fashion' ||
+    category !== 'Food' ||
+    category !== 'Lifestyle' ||
+    category !== 'University' ||
+    category !== 'For You'
   )
 }
 
