@@ -300,7 +300,7 @@ function edit_post(req, res, next) {
 
 
   if (!utils.is_valid_category(req.body.category)) {
-    return utils.response(req, res, 400, {error: 'Invalid category'});
+    return utils.response(req, res, 400, {error: req.body.category});
   }
 
   Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
