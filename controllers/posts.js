@@ -58,6 +58,7 @@ function create_post(req, res, next) {
     }
   }
 
+  // Check if category is valid
   if (!utils.is_valid_category(req.body.category)) {
     return utils.response(req, res, 400, {error: 'Invalid category'});
   }
@@ -237,6 +238,32 @@ function get_newest_posts(req, res, next) {
     return utils.response(req, res, 200, posts);
   });
 }
+
+function get_newest_posts_category(req, res, next) {
+  const skipCount = parseInt(req.query.count) || 0;
+  const category = req.query.filter;
+
+  
+  if (typeof(skipCount) != 'number'){
+    return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
+  }
+
+  if (typeof(category) != 'string') {
+    return utils.response(req, res, 400, {error: 'Invalid filter type'});
+  }
+  Post
+  .find({category: category})
+  .populate('posterId', 'user_name profile_image')
+  .sort({postDate: -1}) 
+  .skip(skipCount)
+  .limit(20)
+  .exec(function(err, posts) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+    return utils.response(req, res, 200, posts);
+  });
+}
   
 function edit_post(req, res, next) {
   if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords', 'category'])) {
@@ -298,7 +325,7 @@ function edit_post(req, res, next) {
     }
   }
 
-
+  // Check if category is valid
   if (!utils.is_valid_category(req.body.category)) {
     return utils.response(req, res, 400, {error: req.body.category});
   }
@@ -345,7 +372,9 @@ module.exports = {
   delete_post: delete_post,
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
+  get_newest_posts_category: get_newest_posts_category,
   search_post: search_post,
   edit_post: edit_post,
-  delete_post_image
+  delete_post_image: delete_post_image,
+  
 }
