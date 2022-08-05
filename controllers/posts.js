@@ -252,7 +252,7 @@ function get_newest_posts_category(req, res, next) {
     return utils.response(req, res, 400, {error: 'Invalid filter type'});
   }
   Post
-  .find({category: category})
+  .find({ 'category': category })
   .populate('posterId', 'user_name profile_image')
   .sort({postDate: -1}) 
   .skip(skipCount)
