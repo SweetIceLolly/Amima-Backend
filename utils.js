@@ -57,11 +57,25 @@ function http_get(url) {
   return axios.get(url);
 }
 
+
+function is_valid_category(category){
+  return (
+    category == 'Technology' ||
+    category == 'Fashion' ||
+    category == 'Food' ||
+    category == 'Lifestyle' ||
+    category == 'University' ||
+    category == 'For You'
+  );
+}
+
+
 module.exports = {
   generate_token,
   check_body_fields,
   is_valid_keyword,
   sanitize_search_term,
   response,
-  http_get
+  http_get,
+  is_valid_category
 };

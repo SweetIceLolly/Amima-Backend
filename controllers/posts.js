@@ -5,12 +5,13 @@ const Image = require('../models/image');
 const db = require('mongoose');
 
 function create_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords'])) {
+  if (!utils.check_body_fields(req.body, ['auth_user_id', 'title', 'content', 'images', 'keywords', 'category'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
   
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of post'});
@@ -57,6 +58,11 @@ function create_post(req, res, next) {
     }
   }
 
+  // Check if category is valid
+  if (!utils.is_valid_category(req.body.category)) {
+    return utils.response(req, res, 400, {error: 'Invalid category'});
+  }
+
   // Create the post
   const post = new Post({
     title: req.body.title,
@@ -64,6 +70,7 @@ function create_post(req, res, next) {
     keywords: req.body.keywords,
     images: req.body.images,
     posterId: req.body.auth_user_id,
+    category: req.body.category
   });
 
   post.save((err, post) => {
@@ -214,27 +221,52 @@ function delete_post(req, res, next) {
 
 function get_newest_posts(req, res, next) {
   const skipCount = parseInt(req.query.count) || 0;
+  
+  if (typeof(skipCount) != 'number'){
+    return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
+  }
+  Post
+  .find({})
+  .populate('posterId', 'user_name profile_image')
+  .sort({postDate: -1}) 
+  .skip(skipCount)
+  .limit(20)
+  .exec(function(err, posts) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+    return utils.response(req, res, 200, posts);
+  });
+}
 
+function get_newest_posts_category(req, res, next) {
+  const skipCount = parseInt(req.query.count) || 0;
+  const category = req.query.filter;
+
+  
   if (typeof(skipCount) != 'number'){
     return utils.response(req, res, 400, {error: 'Invalid skipCount type'});
   }
 
+  if (typeof(category) != 'string') {
+    return utils.response(req, res, 400, {error: 'Invalid filter type'});
+  }
   Post
-    .find()
-    .populate('posterId', 'user_name profile_image')
-    .sort({postDate: -1})
-    .skip(skipCount)
-    .limit(20)
-    .exec(function(err, posts) {
-      if (err) {
-        return utils.response(req, res, 500, {error: 'Internal server error'});
-      }
-      return utils.response(req, res, 200, posts);
-    });
+  .find({ 'category': category })
+  .populate('posterId', 'user_name profile_image')
+  .sort({postDate: -1}) 
+  .skip(skipCount)
+  .limit(20)
+  .exec(function(err, posts) {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+    return utils.response(req, res, 200, posts);
+  });
 }
-
+  
 function edit_post(req, res, next) {
-  if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords'])) {
+  if (!utils.check_body_fields(req.body, [ '_id', 'auth_user_id', 'title', 'content', 'images','keywords', 'category'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
 
@@ -246,6 +278,7 @@ function edit_post(req, res, next) {
 
   if (typeof (req.body.title) != "string" ||
       typeof (req.body.content) != "string" ||
+      typeof (req.body.category) != "string" ||
       !Array.isArray(req.body.images) ||
       !Array.isArray(req.body.keywords)) {
         return utils.response(req, res, 400, {error: 'Invalid type of edit'});
@@ -292,11 +325,17 @@ function edit_post(req, res, next) {
     }
   }
 
+  // Check if category is valid
+  if (!utils.is_valid_category(req.body.category)) {
+    return utils.response(req, res, 400, {error: req.body.category});
+  }
+
   Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
     title: req.body.title,  
     content: req.body.content,
     images: req.body.images,
-    keywords: req.body.keywords
+    keywords: req.body.keywords,
+    category: req.body.category
   }}).exec(function(err, post) {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
@@ -333,7 +372,9 @@ module.exports = {
   delete_post: delete_post,
   upload_image: upload_image,
   get_newest_posts: get_newest_posts,
+  get_newest_posts_category: get_newest_posts_category,
   search_post: search_post,
   edit_post: edit_post,
-  delete_post_image
+  delete_post_image: delete_post_image,
+  
 }
