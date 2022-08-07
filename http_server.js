@@ -1,4 +1,5 @@
 const express = require('express');
+const expressWs = require('express-ws');
 const cors = require('cors');
 const compression = require("compression");
 const helmet = require("helmet");
@@ -35,6 +36,8 @@ function start_server() {
     limits: { fileSize: Number(process.env.UPLOAD_IMAGE_SIZE) },
   }));
 
+  // Add WebSocket middleware
+  expressWs(app);
 
   // Add body parser middleware
   app.use(bodyParser.json());
@@ -45,6 +48,9 @@ function start_server() {
 
   // Add routes
   routers.init_router(app);
+
+  // Add WebSocket routes
+  routers.init_websocket_router(app);
 
   // Serve static image files
   app.use('/post_images', express.static(path.join(__dirname, process.env.UPLOAD_PATH)));
@@ -59,6 +65,10 @@ function start_server() {
   return new Promise((resolve, reject) => {
     app.listen(process.env.PORT || 3000, () => {
       resolve();
+    }).on('connection', function(ws) {
+      ws.timeoutTicket = setTimeout(function() {
+        ws.destroy();
+      }, process.env.WS_AUTH_TIMEOUT);
     }).on('error', (err) => {
       reject(err);
     });

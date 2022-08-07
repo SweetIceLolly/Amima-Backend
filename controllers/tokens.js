@@ -4,34 +4,45 @@ const LoginToken = require('../models/token');
 function check_login_token(req, res, next) {
   // Note: the token is in the header's auth field
   const token = req.headers.auth;
+
+  // Check if the token is valid
+  const login_token = is_token_valid(token);
+  if (!login_token) {
+    return utils.response(req, res, 401, {error: 'Invalid token'});
+  }
+
+  if (req.body) {
+    req.body.auth_user_id = login_token.user_id;
+    req.body.auth_token = login_token;
+  } else {
+    req.auth_user_id = login_token.user_id;
+    req.auth_token = login_token;
+  }
+  next();
+}
+
+async function is_token_valid(token) {
   if (!token) {
-    return utils.response(req, res, 401, {error: 'No token provided'});
+    return false;
   }
 
   // Check if the token is valid
-  LoginToken.findOne({ token }, (err, login_token) => {
-    if (err) {
-      return utils.response(req, res, 500, {error: 'Internal server error'});
-    }
-
+  try {
+    const login_token = await LoginToken.findOne({ token });
     if (!login_token) {
-      return utils.response(req, res, 401, {error: 'Invalid token'});
+      return false;
     }
 
     // Check if the token has expired
     if (login_token.expires_at <= Date.now()) {
-      return utils.response(req, res, 401, {error: 'Token expired'});
+      return false;
     }
 
-    if (req.body) {
-      req.body.auth_user_id = login_token.user_id;
-      req.body.auth_token = login_token;
-    } else {
-      req.auth_user_id = login_token.user_id;
-      req.auth_token = login_token;
-    }
-    next();
-  });
+    return login_token;
+  }
+  catch (err) {
+    return false;
+  }
 }
 
 function create_token(req, res, next) {
@@ -91,7 +102,8 @@ function renew_token(req, res, next) {
 
 module.exports = {
   check_login_token: check_login_token,
+  is_token_valid: is_token_valid,
   create_token: create_token,
   renew_token: renew_token,
-  delete_token: delete_token
+  delete_token: delete_token,
 };

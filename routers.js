@@ -3,6 +3,10 @@ const usersController = require('./controllers/users');
 const tokensController = require('./controllers/tokens');
 const commentsController = require('./controllers/comments');
 const favouritesController = require('./controllers/favourites');
+const followerController = require('./controllers/followers');
+const WebSocketServer = require('ws').WebSocketServer;
+
+const wss = new WebSocketServer({ noServer: true });
 
 function init_router(app) {
   app.post('/post', tokensController.check_login_token, tokensController.renew_token, postsController.create_post);
@@ -30,6 +34,11 @@ function init_router(app) {
   app.delete('/deletecomment/:commentId', tokensController.check_login_token, tokensController.renew_token, commentsController.delete_comment);
 }
 
+function init_websocket_router(app) {
+  app.ws('/ws/follow', followerController.follower_ws_handler);
+}
+
 module.exports = {
-  init_router: init_router
+  init_router: init_router,
+  init_websocket_router: init_websocket_router
 }
