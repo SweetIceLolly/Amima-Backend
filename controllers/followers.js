@@ -7,12 +7,32 @@ let ws_connections = {};   // A mapping from userId to a list of ws connections
 function follower_ws_handler(ws) {
   let userId = '';
 
-  ws.on('connection', function(ws, req) {
-    console.log(req);
-  });
-
-  ws.on('message', function(msg) {
-    ws.send(msg);
+  ws.on('message', async function(msg) {
+    try {
+      const data = JSON.parse(msg);
+      if (data.type === 'auth') {
+        const token = data.token;
+        if (!token) {
+          ws._socket.destroy();
+        }
+        const login_token = await tokensController.is_token_valid(token);
+        if (!login_token) {
+          ws._socket.destroy();
+        } else {
+          userId = login_token.user_id.toString();
+          clearTimeout(ws._socket.timeoutTicket);
+          if (!ws_connections[userId]) {
+            ws_connections[userId] = [];
+          }
+          ws_connections[userId].push(ws);
+        }
+      } else {
+        ws._socket.destroy();
+      }
+    }
+    catch (e) {
+      ws._socket.destroy();
+    }
   });
 
   ws.on('close', function() {
