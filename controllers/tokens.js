@@ -11,12 +11,11 @@ function check_login_token(req, res, next) {
     return utils.response(req, res, 401, {error: 'Invalid token'});
   }
 
+  req.auth_user_id = login_token.user_id;
+  req.auth_token = login_token;
   if (req.body) {
     req.body.auth_user_id = login_token.user_id;
     req.body.auth_token = login_token;
-  } else {
-    req.auth_user_id = login_token.user_id;
-    req.auth_token = login_token;
   }
   next();
 }
