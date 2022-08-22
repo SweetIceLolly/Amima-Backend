@@ -32,7 +32,8 @@ function init_router(app) {
   app.post('/followuser', tokensController.check_login_token, tokensController.renew_token, followerController.new_follow);
   app.get('/getfollowedusers', tokensController.check_login_token, tokensController.renew_token, followerController.get_followed_users);
   app.get('/getfollowers', tokensController.check_login_token, tokensController.renew_token, followerController.get_followers);
-  app.delete('/unfollowuser', tokensController.check_login_token, tokensController.renew_token, followerController.remove_follow);
+  app.post('/unfollowuser', tokensController.check_login_token, tokensController.renew_token, followerController.remove_follow);
+  app.get('/isfollowed/:to', tokensController.check_login_token, tokensController.renew_token, followerController.is_followed);
   app.post('/changesub', tokensController.check_login_token, tokensController.renew_token, followerController.change_subscription);
   app.get('/followerscount/:user', followerController.get_followers_count);
 }

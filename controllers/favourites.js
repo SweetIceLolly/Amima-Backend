@@ -1,6 +1,9 @@
 const Favourites = require('../models/favourite');
 const db = require('mongoose');
 const utils = require("../utils");
+const Users = require("../models/user");
+const Posts = require("../models/post");
+const FollowersController = require("./followers");
 
 async function get_favPost_by_userId(req, res, next) {
   const userId = req.params.user;
@@ -32,6 +35,11 @@ async function add_favourite_post(req, res, next) {
     return utils.response(req, res, 400, {error: 'Post already favourited'});
   }
 
+  const targetPost = await Posts.findOne({ _id: req.body.post_id }, {_id: 0, title: 1});
+  if (!targetPost) {
+    return utils.response(req, res, 404, {error: 'Post not found'});
+  }
+
   const new_favorite = new Favourites({
     userId: req.body.auth_user_id,
     postId: req.body.post_id
@@ -39,6 +47,16 @@ async function add_favourite_post(req, res, next) {
 
   new_favorite.save()
     .then(() => {
+      Users.findOne({_id: req.body.auth_user_id}, {_id: 0, user_name: 1})
+        .then(user => {
+          FollowersController.notify_users('favourite', {
+            user: req.body.auth_user_id,
+            post_id: req.body.post_id,
+            user_name: user.user_name,
+            post_title: targetPost.title,
+          });
+        });
+
       return utils.response(req, res, 200, {message: 'Post favourited'});
     })
     .catch(err => {

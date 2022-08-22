@@ -1,4 +1,5 @@
 const Followers = require('../models/follower');
+const Users = require('../models/user');
 const db = require('mongoose');
 const tokensController = require('../controllers/tokens');
 const utils = require("../utils");
@@ -63,7 +64,7 @@ async function new_follow(req, res, next) {
     return utils.response(req, res, 400, {error: 'Invalid User ID'});
   }
 
-  const from = req.auth_user_id;
+  const from = req.auth_user_id.toString();
   const to = req.body.follow_to;
 
   // Check if the user already has that following
@@ -77,8 +78,11 @@ async function new_follow(req, res, next) {
     to: to
   });
 
-  notify_users('follow_to', { from: from, to: to });
-  notify_users('followed_by', { from: from, to: to });
+  const from_user = await Users.findOne({ _id: from }, { _id: false, user_name: true });
+  const to_user = await Users.findOne({ _id: to }, { _id: false, user_name: true });
+
+  notify_users('followed_by', { from: from, to: to, from_name: from_user.user_name, to_name: to_user.user_name });
+  notify_users('follow_to', { from: from, to: to, from_name: from_user.user_name, to_name: to_user.user_name });
 
   follow_entry.save()
     .then(() => {
@@ -103,8 +107,26 @@ async function remove_follow(req, res, next) {
   const to = req.body.unfollow_to;
 
   // Remove the follow
-  Followers.deleteOne({ from: from, to: to });
-  return utils.response(req, res, 200, {message: 'Unfollowed'});
+  Followers.deleteOne({ from: from, to: to })
+    .then(() => {
+      return utils.response(req, res, 200, {message: 'Unfollowed'});
+    })
+    .catch(err => {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    });
+}
+
+async function is_followed(req, res, next) {
+  const from = req.auth_user_id;
+  const to = req.params.to;
+
+  // Check if the id is valid
+  if (!db.Types.ObjectId.isValid(to)) {
+    return utils.response(req, res, 400, {error: 'Invalid User ID'});
+  }
+
+  const followed = await Followers.findOne({ from: from, to: to });
+  return utils.response(req, res, 200, {followed: !!followed});
 }
 
 async function get_followers(req, res, next) {
@@ -175,11 +197,11 @@ async function get_followers_count(req, res, next) {
  *  follow_to:    Notify the users who want to receive notifications when their followed user starts following another user
  *  followed_by:  Notify the user when another user starts following them
  * @param data: Additional data specified by the subscription type:
- *  post:         user: the user who created the post; post_id: the id of the post;
- *  comment:      user: the user who created the comment; post_id: the id of the post; comment_id: the id of the comment;
- *  favourite:    user: the user who favourited the post; post_id: the id of the post;
- *  follow_to:    from, to
- *  followed_by:  from, to
+ *  post:         user: the user who created the post; post_id: the id of the post; user_name; post_title
+ *  comment:      user: the user who created the comment; post_id: the id of the post; comment_id: the id of the comment; user_name; post_title
+ *  favourite:    user: the user who favourited the post; post_id: the id of the post; user_name; post_title
+ *  follow_to:    from; to; from_name; to_name
+ *  followed_by:  from; to; from_name; to_name
  * @returns {Promise<void>}
  */
 async function notify_users(subscription_type, data) {
@@ -188,22 +210,22 @@ async function notify_users(subscription_type, data) {
   switch (subscription_type) {
     case 'post':
       filters['sub_post'] = true;
-      filters['to'] = data.user;
+      filters['to'] = data.user.toString();
       break;
 
     case 'comment':
       filters['sub_comment'] = true;
-      filters['to'] = data.user;
+      filters['to'] = data.user.toString();
       break;
 
     case 'favourite':
       filters['sub_favourite'] = true;
-      filters['to'] = data.user;
+      filters['to'] = data.user.toString();
       break;
 
     case 'follow_to':
       filters['sub_follow'] = true;
-      filters['to'] = data.from;
+      filters['to'] = data.from.toString();
       break;
   }
 
@@ -211,11 +233,11 @@ async function notify_users(subscription_type, data) {
   if (subscription_type === 'followed_by') {
     users = [data.to];
   } else {
-    users = await Followers.find(filters);
+    users = (await Followers.find(filters)).map(followingInfo => followingInfo.from.toString());
   }
 
   for (const user of users) {
-    const user_connections = ws_connections[user._id];
+    const user_connections = ws_connections[user];
     if (user_connections) {
       for (const ws of user_connections) {
         ws.send(JSON.stringify({
@@ -235,5 +257,6 @@ module.exports = {
   get_followed_users: get_followed_users,
   change_subscription: change_subscription,
   get_followers_count: get_followers_count,
+  is_followed: is_followed,
   notify_users: notify_users
 }

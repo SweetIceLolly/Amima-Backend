@@ -1,12 +1,12 @@
 const utils = require('../utils');
 const LoginToken = require('../models/token');
 
-function check_login_token(req, res, next) {
+async function check_login_token(req, res, next) {
   // Note: the token is in the header's auth field
   const token = req.headers.auth;
 
   // Check if the token is valid
-  const login_token = is_token_valid(token);
+  const login_token = await is_token_valid(token);
   if (!login_token) {
     return utils.response(req, res, 401, {error: 'Invalid token'});
   }

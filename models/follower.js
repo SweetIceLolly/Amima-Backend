@@ -17,19 +17,19 @@ const follower_schema = new mongoose.Schema({
   },
   sub_post: {
     type: Boolean,
-    default: false
+    default: true
   },
   sub_comment: {
     type: Boolean,
-    default: false
+    default: true
   },
   sub_favourite: {
     type: Boolean,
-    default: false
+    default: true
   },
   sub_follow: {
     type: Boolean,
-    default: false
+    default: true
   }
 });
 
