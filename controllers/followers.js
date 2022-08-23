@@ -177,7 +177,7 @@ async function change_subscription(req, res, next) {
 }
 
 async function get_followers_count(req, res, next) {
-  const target = req.params.user_id;
+  const target = req.params.user;
 
   // Check if the id is valid
   if (!db.Types.ObjectId.isValid(target)) {
