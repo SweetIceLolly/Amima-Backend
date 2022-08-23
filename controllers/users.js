@@ -4,6 +4,9 @@ const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
 const Post = require('../models/post');
 const db = require('mongoose');
+const AppleAuth = require('apple-auth');
+const jwt = require("jsonwebtoken");
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -66,9 +69,45 @@ async function verify_oauth_token(req, res, next) {
     req.body.email = userInfo.data.email;
     next();
   }
+  else if (req.body.provider === 'apple'){
+    const auth = new AppleAuth({
+        client_id: req.body.useBundleId === "true" 
+          ? process.env.APPLE_PACKAGE_IDENTIFIER 
+          : process.env.APPLE_SIGNIN_SERVICE_ID,
+        team_id: process.env.APPLE_SIGNIN_TEAM_ID,
+        redirect_uri: process.env.APPLE_SIGNIN_REDIRECT_URL,
+        key_id: process.env.APPLE_SIGNIN_KEY_ID
+      },
+      process.env.APPLE_SIGNIN_KEY_CONTENTS.replace(/\|/g, "\n"),
+      "text"
+    );
+      
+    try{
+      const accessToken = await auth.accessToken(req.body.loginData);
+      const idToken = jwt.decode(accessToken.id_token);
+      // Unique identifier
+      req.body.apple_id_token = idToken.sub;
+      // userName will only be provided for the initial authorization
+      req.body.apple_user = `${req.body.firstName} ${req.body.lastName}`;
+      req.body.email = idToken.email;
+      next();
+    }catch(err){
+      return utils.response(req, res, 400, 'Failed to verify token');
+    }
+  }
   else {
     return utils.response(req, res, 400, 'Invalid provider');
   }
+}
+
+function apple_signin_callback(req, res, next) {
+  // Callback for sign in with apple on Android devices
+  const redirect = `intent://callback?${new URLSearchParams(
+      req.body
+    ).toString()}#Intent;package=${
+      process.env.ANDROID_PACKAGE_IDENTIFIER
+    };scheme=signinwithapple;end`;
+  return res.redirect(307, redirect);
 }
 
 function create_user(req, res, next) {
@@ -81,6 +120,10 @@ function create_user(req, res, next) {
   else if (req.body.provider === 'facebook') {
     user_name = req.body.facebook_user.name;
     provider = 'facebook';
+  }
+  else if (req.body.provider === 'apple') {
+    user_name = req.body.apple_user;
+    provider = 'apple';
   }
   else {
     return utils.response(req, res, 400, 'Invalid provider');
@@ -219,5 +262,6 @@ module.exports = {
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,
-  profile_image_upload: profile_image_upload
+  profile_image_upload: profile_image_upload,
+  apple_signin_callback: apple_signin_callback
 };
