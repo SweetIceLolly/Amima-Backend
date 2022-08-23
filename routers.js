@@ -14,6 +14,7 @@ function init_router(app) {
   app.post('/profileimage', tokensController.check_login_token, tokensController.renew_token, usersController.profile_image_upload);
   app.get('/user/:id', usersController.get_user);
   app.post('/login', usersController.verify_oauth_token, usersController.login, tokensController.create_token);
+  app.delete('/deleteAccount', tokensController.check_login_token, tokensController.renew_token, usersController.delete_account);
   app.post('/appleSigninCallback', usersController.apple_signin_callback);
   app.get('/searchPost', postsController.search_post);
   app.get('/newestposts', postsController.get_newest_posts);

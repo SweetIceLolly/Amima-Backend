@@ -3,6 +3,10 @@ const Image = require('../models/image')
 const utils = require('../utils');
 const { OAuth2Client } = require('google-auth-library');
 const Post = require('../models/post');
+const Comment = require('../models/comment');
+const Favourite = require('../models/favourite');
+const Token = require('../models/token');
+const Follower = require('../models/follower');
 const db = require('mongoose');
 const AppleAuth = require('apple-auth');
 const jwt = require("jsonwebtoken");
@@ -142,7 +146,7 @@ function create_user(req, res, next) {
 function get_user(req, res, next) {
   const user_id = req.params.id;
 
-  User.findOne({ _id: user_id }, (err, user) => {
+  User.findOne({ _id: user_id }, "bio profile_image user_name email", (err, user) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
@@ -152,6 +156,38 @@ function get_user(req, res, next) {
     }
 
     return utils.response(req, res, 200, user);
+  });
+}
+
+function delete_account(req, res, next) {
+  const userId = req.body.auth_user_id;
+
+  User.findOneAndDelete({ _id: userId }, async (err, user) => {
+    if (err) {
+      return utils.response(req, res, 500, {error: 'Internal server error'});
+    }
+
+    if (!user) {
+      return utils.response(req, res, 404, {error: 'User not found'});
+    }
+
+    // Delete all posts
+    await Post.deleteMany({ posterId: userId });
+
+    // Delete all comments
+    await Comment.deleteMany({ userId: userId });
+
+    // Delete all favorites
+    await Favourite.deleteMany({ userId: userId });
+
+    // Delete all follower information
+    await Follower.deleteMany({ from: userId });
+    await Follower.deleteMany({ to: userId });
+
+    // Delete all tokens
+    await Token.deleteMany({ user_id: userId });
+
+    return utils.response(req, res, 200, {message: 'User deleted'});
   });
 }
 
@@ -259,6 +295,7 @@ async function profile_image_upload(req, res, next) {
 
 module.exports = {
   get_user: get_user,
+  delete_account: delete_account,
   login: login,
   editProfile: editProfile,
   verify_oauth_token: verify_oauth_token,

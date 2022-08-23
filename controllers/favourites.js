@@ -16,7 +16,7 @@ async function get_favPost_by_userId(req, res, next) {
     if (err) {
       return utils.response(req, res, 500, { error: 'Internal server error' });
     }
-    return utils.response(req, res, 200, favourites.map(favourite => favourite.postId));
+    return utils.response(req, res, 200, favourites.map(favourite => favourite.postId).filter(postId => db.Types.ObjectId.isValid(postId)));
   }).populate({path: 'postId', populate: {path: 'posterId', select: 'user_name profile_image'}});
 }
 
