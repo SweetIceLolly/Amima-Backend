@@ -74,9 +74,7 @@ function delete_comment(req, res, next) {
   const commentId = req.params.commentId;
   
   if (!db.Types.ObjectId.isValid(commentId)) {
-    return res.status(400).json({
-      error: 'Invalid Comment ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid Comment ID'});
   }
 
   Comment.findOne({ _id: commentId }, (err, comment) => {

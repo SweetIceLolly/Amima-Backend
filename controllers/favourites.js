@@ -9,18 +9,14 @@ async function get_favPost_by_userId(req, res, next) {
   const userId = req.params.user;
 
   if (!db.Types.ObjectId.isValid(userId)) {
-    return res.status(400).json({
-      error: 'Invalid User ID'
-    });
+    return utils.response(req, res, 400, { error: 'Invalid User ID' });
   }
 
   Favourites.find({ userId: userId }, (err, favourites) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, { error: 'Internal server error' });
     }
-    return res.status(200).json(favourites.map(favourite => favourite.postId));
+    return utils.response(req, res, 200, favourites.map(favourite => favourite.postId));
   }).populate({path: 'postId', populate: {path: 'posterId', select: 'user_name profile_image'}});
 }
 
@@ -75,9 +71,7 @@ async function delete_favourite_post(req, res, next) {
       return utils.response(req, res, 404, { error: 'Favourite not found' });
     }
 
-    return res.status(200).json({
-      message: 'Post removed'
-    });
+    return utils.response(req, res, 200, {message: 'Favourite deleted'});
   });
 }
 
@@ -94,9 +88,7 @@ async function check_favourite_post(req, res, next) {
     }
 
     // Return true if the user has that favourite post
-    return res.status(200).json({
-      check: (favourite !== null)
-    });
+    return utils.response(req, res, 200, {check: (favourite !== null)});
   });
 }
 

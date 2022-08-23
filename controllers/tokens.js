@@ -68,14 +68,10 @@ function create_token(req, res, next) {
 function delete_token(req, res, next) {
   LoginToken.deleteMany({user: req.auth_user_id})
     .then(() => {
-      return res.status(200).json({
-        message: 'token deleted'
-      });
+      return utils.response(req, res, 200, {message: 'Token deleted'});
     })
     .catch(err => {
-      return res.status(500).json({
-        error: 'Internal server error'
-      })
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     })
 }
 

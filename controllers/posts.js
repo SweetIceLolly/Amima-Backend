@@ -98,9 +98,7 @@ function get_post(req, res, next) {
   const postId = req.params.id;
 
   if (!db.Types.ObjectId.isValid(postId)){
-    return res.status(400).json({
-      error: 'Wrong get Post ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid post ID'});
   }
 
   Post.findOne({ _id: postId }, (err, post) => {
@@ -180,19 +178,15 @@ function get_post_by_userId(req, res, next) {
   }
 
   if (!db.Types.ObjectId.isValid(userId)){
-    return res.status(400).json({
-      error: 'Invalid User ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid user ID'});
   }
 
   Post.find({ posterId: userId }, (err, posts) => {
     if (err) {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    return res.status(200).json(posts)
+    return utils.response(req, res, 200, posts);
   }, {skip: skipCount, limit:20}).populate('posterId').sort({postDate:-1});
 }
 
@@ -200,9 +194,7 @@ function delete_post(req, res, next) {
   const postId = req.params.id;
 
   if (!db.Types.ObjectId.isValid(postId)){
-    return res.status(400).json({
-      error: 'Invalid Post ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid post ID'});
   }
 
   Post.findOne({ _id: postId }, async (err, post) => {
@@ -283,9 +275,7 @@ function edit_post(req, res, next) {
   }
 
   if (!db.Types.ObjectId.isValid(req.body._id)){
-    return res.status(400).json({
-      error: 'Invalid Post ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid post ID'});
   }
 
   if (typeof (req.body.title) != "string" ||
@@ -361,19 +351,15 @@ function delete_post_image(req, res, next){
   const imageId = req.params.id;
 
   if (db.Types.ObjectId.isValid(imageId) == false){
-    return res.status(400).json({
-      error: 'Invalid Image ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid image ID'});
   }
 
   Image.deleteOne({_id: imageId})
     .then(() => {
-      return res.status(200).json();
+      return utils.response(req, res, 200, {message: 'Image deleted'});
     })
     .catch(err => {
-      return res.status(500).json({
-        error: 'Internal server error'
-      });
+      return utils.response(req, res, 500, {error: 'Internal server error'});
     });
 }
 

@@ -131,14 +131,14 @@ async function is_followed(req, res, next) {
 
 async function get_followers(req, res, next) {
   const userId = req.auth_user_id;
-  const users = await Followers.find({ to: userId });
-  return utils.response(req, res, 200, {users: users});
+  const users = await Followers.find({ to: userId }, '-_id -to -followed_at -__v').populate('from', 'user_name profile_image');
+  return utils.response(req, res, 200, users);
 }
 
 async function get_followed_users(req, res, next) {
   const userId = req.auth_user_id;
-  const users = await Followers.find({ from: userId });
-  return utils.response(req, res, 200, {users: users});
+  const users = await Followers.find({ from: userId }, '-_id -from -followed_at -__v').populate('to', 'user_name profile_image');
+  return utils.response(req, res, 200, users);
 }
 
 async function change_subscription(req, res, next) {
@@ -205,27 +205,27 @@ async function get_followers_count(req, res, next) {
  * @returns {Promise<void>}
  */
 async function notify_users(subscription_type, data) {
-  let filters = {};
+  let filters = {$and: []};
 
   switch (subscription_type) {
     case 'post':
-      filters['sub_post'] = true;
-      filters['to'] = data.user.toString();
+      filters.$and.push({sub_post: true});
+      filters.$and.push({to: data.user.toString()});
       break;
 
     case 'comment':
-      filters['sub_comment'] = true;
-      filters['to'] = data.user.toString();
+      filters.$and.push({sub_comment: true});
+      filters.$and.push({to: data.user.toString()});
       break;
 
     case 'favourite':
-      filters['sub_favourite'] = true;
-      filters['to'] = data.user.toString();
+      filters.$and.push({sub_favourite: true});
+      filters.$and.push({to: data.user.toString()});
       break;
 
     case 'follow_to':
-      filters['sub_follow'] = true;
-      filters['to'] = data.from.toString();
+      filters.$and.push({sub_follow: true});
+      filters.$and.push({to: data.from.toString()});
       break;
   }
 
