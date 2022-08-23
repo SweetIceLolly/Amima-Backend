@@ -3,6 +3,7 @@ const usersController = require('./controllers/users');
 const tokensController = require('./controllers/tokens');
 const commentsController = require('./controllers/comments');
 const favouritesController = require('./controllers/favourites');
+const followerController = require('./controllers/followers');
 
 function init_router(app) {
   app.post('/post', tokensController.check_login_token, tokensController.renew_token, postsController.create_post);
@@ -29,8 +30,20 @@ function init_router(app) {
   app.get('/comments/:id', commentsController.get_comments);
   app.post('/comment', tokensController.check_login_token, tokensController.renew_token, commentsController.create_comment);
   app.delete('/deletecomment/:commentId', tokensController.check_login_token, tokensController.renew_token, commentsController.delete_comment);
+  app.post('/followuser', tokensController.check_login_token, tokensController.renew_token, followerController.new_follow);
+  app.get('/getfollowedusers', tokensController.check_login_token, tokensController.renew_token, followerController.get_followed_users);
+  app.get('/getfollowers', tokensController.check_login_token, tokensController.renew_token, followerController.get_followers);
+  app.post('/unfollowuser', tokensController.check_login_token, tokensController.renew_token, followerController.remove_follow);
+  app.get('/isfollowed/:to', tokensController.check_login_token, tokensController.renew_token, followerController.is_followed);
+  app.post('/changesub', tokensController.check_login_token, tokensController.renew_token, followerController.change_subscription);
+  app.get('/followerscount/:user', followerController.get_followers_count);
+}
+
+function init_websocket_router(app) {
+  app.ws('/ws/follow', followerController.follower_ws_handler);
 }
 
 module.exports = {
-  init_router: init_router
+  init_router: init_router,
+  init_websocket_router: init_websocket_router
 }

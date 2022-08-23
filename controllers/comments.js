@@ -1,7 +1,10 @@
 const db = require('mongoose');
 const Comment = require('../models/comment');
 const User = require('../models/user');
+const Post = require('../models/post');
 const utils = require('../utils');
+const Users = require("../models/user");
+const FollowersController = require("./followers");
 
 function get_comments(req, res, next) {
 	const post_Id = req.params.id;
@@ -18,7 +21,7 @@ function get_comments(req, res, next) {
 	}).populate('userId', 'profile_image user_name').sort({created_at:-1});
 }
 
-function create_comment(req, res, next) {
+async function create_comment(req, res, next) {
   if (!utils.check_body_fields(req.body, ['auth_user_id', 'content', 'postId'])) {
     return utils.response(req, res, 400, {error: 'Missing required fields'});
   }
@@ -36,6 +39,11 @@ function create_comment(req, res, next) {
     return utils.response(req, res, 400, {error: 'Content is too long'});
   }
 
+  const targetPost = await Post.findOne({ _id: req.body.postId }, { _id: 0, title: 1 });
+  if (!targetPost) {
+    return utils.response(req, res, 404, {error: 'Post not found'});
+  }
+
   const comment = new Comment({
     content: req.body.content,
     postId: req.body.postId,
@@ -47,7 +55,17 @@ function create_comment(req, res, next) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
     }
 
-    comment.userId = await User.findOne({_id: comment.userId}, 'profile_image user_name')
+    Users.findOne({_id: req.body.auth_user_id}, {_id: 0, user_name: 1})
+      .then(user => {
+        FollowersController.notify_users('comment', {
+          user: req.body.auth_user_id,
+          post_id: comment.postId,
+          comment_id: comment._id,
+          user_name: user.user_name,
+          post_title: targetPost.title,
+        });
+      });
+
     return utils.response(req, res, 201, comment);
   });
 }
@@ -56,9 +74,7 @@ function delete_comment(req, res, next) {
   const commentId = req.params.commentId;
   
   if (!db.Types.ObjectId.isValid(commentId)) {
-    return res.status(400).json({
-      error: 'Invalid Comment ID'
-    });
+    return utils.response(req, res, 400, {error: 'Invalid Comment ID'});
   }
 
   Comment.findOne({ _id: commentId }, (err, comment) => {
