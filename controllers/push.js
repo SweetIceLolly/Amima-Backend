@@ -36,6 +36,7 @@ async function push_notify_users(user, subscription_type, data) {
   title = "Amima";
   body = "You have a new notification";
   image = "https://amimalive.com/profile_images/default_avatar.png";
+  sound = "";
   type = "";
   user_id = "";
   post_id = "";
@@ -66,6 +67,7 @@ async function push_notify_users(user, subscription_type, data) {
       break;
 
     case 'followed_by':
+      sound = "default";
       body = data.from_name+" has started following you!";
       type = "user";
       user_id = data.from.toString();
@@ -74,7 +76,25 @@ async function push_notify_users(user, subscription_type, data) {
     default:
       break;
   }
-  handleFCM(user, title, body, image, type, user_id, post_id);
+  handleFCM(user, title, body, image, sound, type, user_id, post_id);
+}
+
+async function initializeFirebaseAdmin(){
+  if (admin.apps.length === 0) {
+    const serviceAccount = {
+      "type": "service_account",
+      "project_id": process.env.FIREBASE_PROJECT_ID,
+      "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
+      "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      "client_email": process.env.FIREBASE_CLIENT_EMAIL,
+      "client_id": process.env.FIREBASE_CLIENT_ID,
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": process.env.FIREBASE_CLIENT_X509_CERT_URL
+    }
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  }
 }
 
 /**
@@ -83,6 +103,9 @@ async function push_notify_users(user, subscription_type, data) {
  * @param title: notification title
  * @param body: notification body
  * @param image: notification image
+ * @param sound: notification sound. Can be one of:
+ *  default
+ *  empty
  * @param type: notification type. Can be one of:
  *  post:      Notification popup will show a button redirect to the post
  *  user:      Notification popup will show a button redirect to the user profile
@@ -91,31 +114,17 @@ async function push_notify_users(user, subscription_type, data) {
  * @param post_id: post id of the post to be redirected to
  * @returns {Promise<void>}
  */
-async function handleFCM(userid, title, body, image, type, user_id, post_id){
+async function handleFCM(userid, title, body, image, sound, type, user_id, post_id){
   try {
     PushToken.findOne({ 'user_id': userid }, (err, user) => {
       if (err || !user) {
         return;
       }
 
+      initializeFirebaseAdmin();
+
       const registrationTokens = user.token;
-
-      if (admin.apps.length === 0) {
-        const serviceAccount = {
-          "type": "service_account",
-          "project_id": process.env.FIREBASE_PROJECT_ID,
-          "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
-          "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          "client_email": process.env.FIREBASE_CLIENT_EMAIL,
-          "client_id": process.env.FIREBASE_CLIENT_ID,
-          "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-          "token_uri": "https://oauth2.googleapis.com/token",
-          "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-          "client_x509_cert_url": process.env.FIREBASE_CLIENT_X509_CERT_URL
-        }
-        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-      }
-
+      
       const message = {
         notification: {
           title: title,
@@ -123,15 +132,13 @@ async function handleFCM(userid, title, body, image, type, user_id, post_id){
         },
         android: {
           notification: {
-            imageUrl: image,
-            sound: 'default'
+            imageUrl: image
           }
         },
         apns: {
           payload: {
             aps: {
-              'mutable-content': 1,
-              'sound': 'default'
+              'mutable-content': 1
             }
           },
           fcm_options: {
@@ -150,6 +157,11 @@ async function handleFCM(userid, title, body, image, type, user_id, post_id){
         },
         tokens: registrationTokens,
       };
+
+      if (sound!=""){
+        message.apns.payload.aps.push() = {'sound': sound};
+        message.android.notification.push() = {'sound': sound};
+      }
 
       admin.messaging().sendMulticast(message);
     });
