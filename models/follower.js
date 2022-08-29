@@ -25,11 +25,11 @@ const follower_schema = new mongoose.Schema({
   },
   sub_favourite: {
     type: Boolean,
-    default: true
+    default: false
   },
   sub_follow: {
     type: Boolean,
-    default: true
+    default: false
   }
 });
 
