@@ -71,7 +71,7 @@ async function push_notify_users(user, subscription_type, data) {
       break;
 
     case 'followed_by':
-      sound = "default";
+      // sound = "default";
       body = data.from_name+" has started following you!";
       type = "user";
       user_id = data.from.toString();
