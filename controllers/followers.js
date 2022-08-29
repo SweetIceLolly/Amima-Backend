@@ -3,6 +3,7 @@ const Users = require('../models/user');
 const db = require('mongoose');
 const tokensController = require('../controllers/tokens');
 const utils = require("../utils");
+const { push_notify_users } = require('./push');
 
 let ws_connections = {};   // A mapping from userId to a list of websocket connections
 
@@ -246,6 +247,7 @@ async function notify_users(subscription_type, data) {
         }));
       }
     }
+    push_notify_users(user, subscription_type, data);
   }
 }
 

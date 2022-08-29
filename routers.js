@@ -4,6 +4,7 @@ const tokensController = require('./controllers/tokens');
 const commentsController = require('./controllers/comments');
 const favouritesController = require('./controllers/favourites');
 const followerController = require('./controllers/followers');
+const pushController = require('./controllers/push');
 
 function init_router(app) {
   app.post('/post', tokensController.check_login_token, tokensController.renew_token, postsController.create_post);
@@ -38,6 +39,7 @@ function init_router(app) {
   app.get('/isfollowed/:to', tokensController.check_login_token, tokensController.renew_token, followerController.is_followed);
   app.post('/changesub', tokensController.check_login_token, tokensController.renew_token, followerController.change_subscription);
   app.get('/followerscount/:user', followerController.get_followers_count);
+  app.post('/addNotificationToken', tokensController.check_login_token, tokensController.renew_token, pushController.create_token);
 }
 
 function init_websocket_router(app) {
