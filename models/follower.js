@@ -21,7 +21,7 @@ const follower_schema = new mongoose.Schema({
   },
   sub_comment: {
     type: Boolean,
-    default: true
+    default: false
   },
   sub_favourite: {
     type: Boolean,
