@@ -6,6 +6,10 @@ async function create_token(req, res, next) {
   const user_id = req.body.auth_user_id;
   const push_token = req.body.token;
 
+  if (!user_id || !push_token) {
+    return utils.response(req, res, 400, {message: 'Token invalid'});
+  }
+
   PushToken.findOne({ 'user_id': user_id }, (err, user) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
