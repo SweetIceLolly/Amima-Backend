@@ -332,19 +332,29 @@ function edit_post(req, res, next) {
     return utils.response(req, res, 400, {error: req.body.category});
   }
 
-  Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
-    title: req.body.title,  
-    content: req.body.content,
-    images: req.body.images,
-    keywords: req.body.keywords,
-    category: req.body.category
-  }}).exec(function(err, post) {
+  Post.findOne({ _id: req.body._id }, (err, post) => {
     if (err) {
       return utils.response(req, res, 500, {error: 'Internal server error'});
-    } else {
-      return utils.response(req, res, 200, post);
     }
- });
+
+    if (post.posterId.toString() != req.body.auth_user_id.toString()){
+      return utils.response(req, res, 400, {error: 'Invalid post ID not authroized'});
+    }
+
+    Post.findOneAndUpdate({ _id : req.body._id }, { "$set": {
+      title: req.body.title,  
+      content: req.body.content,
+      images: req.body.images,
+      keywords: req.body.keywords,
+      category: req.body.category
+    }}).exec(function(err, post) {
+      if (err) {
+        return utils.response(req, res, 500, {error: 'Internal server error'});
+      } else {
+        return utils.response(req, res, 200, post);
+      }
+    });
+  });
 }
 
 function delete_post_image(req, res, next){
