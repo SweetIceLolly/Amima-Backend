@@ -94,7 +94,11 @@ async function verify_oauth_token(req, res, next) {
       // Unique identifier
       req.body.apple_id_token = idToken.sub;
       // userName will only be provided for the initial authorization
-      req.body.apple_user = `${req.body.firstName} ${req.body.lastName}`;
+      if (req.body.firstName && req.body.lastName){
+        req.body.apple_user = `${req.body.firstName} ${req.body.lastName}`;
+      }else{
+        req.body.apple_user = `Amima User`
+      }
       req.body.email = idToken.email;
       next();
     }catch(err){
