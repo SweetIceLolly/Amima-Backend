@@ -79,7 +79,9 @@ async function verify_oauth_token(req, res, next) {
           ? process.env.APPLE_PACKAGE_IDENTIFIER 
           : process.env.APPLE_SIGNIN_SERVICE_ID,
         team_id: process.env.APPLE_SIGNIN_TEAM_ID,
-        redirect_uri: process.env.APPLE_SIGNIN_REDIRECT_URL,
+        redirect_uri: req.body.isWeb === "true" 
+          ? process.env.APPLE_SIGNIN_REDIRECT_URL_WEB 
+          : process.env.APPLE_SIGNIN_REDIRECT_URL,
         key_id: process.env.APPLE_SIGNIN_KEY_ID
       },
       process.env.APPLE_SIGNIN_KEY_CONTENTS.replace(/\|/g, "\n"),
@@ -92,7 +94,11 @@ async function verify_oauth_token(req, res, next) {
       // Unique identifier
       req.body.apple_id_token = idToken.sub;
       // userName will only be provided for the initial authorization
-      req.body.apple_user = `${req.body.firstName} ${req.body.lastName}`;
+      if (req.body.firstName && req.body.lastName){
+        req.body.apple_user = `${req.body.firstName} ${req.body.lastName}`;
+      }else{
+        req.body.apple_user = `Amima User`
+      }
       req.body.email = idToken.email;
       next();
     }catch(err){
