@@ -79,7 +79,9 @@ async function verify_oauth_token(req, res, next) {
           ? process.env.APPLE_PACKAGE_IDENTIFIER 
           : process.env.APPLE_SIGNIN_SERVICE_ID,
         team_id: process.env.APPLE_SIGNIN_TEAM_ID,
-        redirect_uri: process.env.APPLE_SIGNIN_REDIRECT_URL,
+        redirect_uri: req.body.isWeb === "true" 
+          ? process.env.APPLE_SIGNIN_REDIRECT_URL_WEB 
+          : process.env.APPLE_SIGNIN_REDIRECT_URL,
         key_id: process.env.APPLE_SIGNIN_KEY_ID
       },
       process.env.APPLE_SIGNIN_KEY_CONTENTS.replace(/\|/g, "\n"),
